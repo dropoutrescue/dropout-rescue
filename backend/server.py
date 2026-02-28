@@ -29,6 +29,13 @@ ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'kyle@dropoutrescue.co.uk')
 
 # Create the main app
 app = FastAPI()
+@app.get("/")
+def root():
+    return {"status": "ok", "service": "dropout-rescue-backend"}
+
+@app.get("/health")
+def health():
+    return {"ok": True}
 api_router = APIRouter(prefix="/api")
 
 # Helper functions
