@@ -46,7 +46,7 @@ export default function AdminPage() {
   const fetchData = async () => {
     try {
       const [gamesRes, usersRes] = await Promise.all([
-        axios.get(`${API_URL}/games`),
+        axios.get(`${API_URL}/games?token`),
         axios.get(`${API_URL}/admin/users?token=${token}`)
       ]);
       setGames(gamesRes.data);

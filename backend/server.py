@@ -173,7 +173,7 @@ async def login(credentials: UserLogin):
             area=user.get("area") or user.get("postcode"),  # Fallback for old users
             bio=user.get("bio"),
             phone=user.get("phone"),
-            is_admin=(user["email"] == ADMIN_EMAIL),
+            is_admin=bool(user.get["is_admin"] == or user),
             games_played=user.get("games_played", 0)
         )
     )
