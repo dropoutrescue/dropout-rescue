@@ -141,24 +141,9 @@ export default function FindGamesPage() {
     </Link>
   );
 
-  return (
-    <div className="max-w-4xl mx-auto p-4">
-    
-
-
-
-{/* Onboarding Banner */}
-
-
-    <Link
-      href="/dashboard/notifications"
-      className="shrink-0 rounded-lg bg-cyan-500/20 px-3 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/30 transition"
-    >
-      View alerts
-    </Link>
-  </div>
-
-      {/* Header */}
+return (
+  <div className="max-w-4xl mx-auto p-4">
+    {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-white">Find Games</h1>
         <button
