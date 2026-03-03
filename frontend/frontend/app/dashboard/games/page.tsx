@@ -149,19 +149,7 @@ export default function FindGamesPage() {
 to me
 
 {/* Onboarding Banner */}
-<div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-  <div className="flex items-start justify-between gap-4">
-    <div>
-      <p className="text-sm font-bold text-white">👋 New here?</p>
 
-      <p className="text-sm text-zinc-300 mt-1">
-        Tap a game → hit <span className="text-white font-semibold">Message</span> to copy a WhatsApp post.
-      </p>
-
-      <p className="text-xs text-zinc-400 mt-2">
-        Tip: If you can’t make it, use <span className="text-white font-semibold">Can’t make it</span> to auto-copy a message.
-      </p>
-    </div>
 
     <Link
       href="/dashboard/notifications"
