@@ -145,8 +145,7 @@ export default function FindGamesPage() {
     <div className="max-w-4xl mx-auto p-4">
     
 
-9:09 PM (6 minutes ago)
-to me
+
 
 {/* Onboarding Banner */}
 
@@ -158,7 +157,7 @@ to me
       View alerts
     </Link>
   </div>
-</div>
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-white">Find Games</h1>
