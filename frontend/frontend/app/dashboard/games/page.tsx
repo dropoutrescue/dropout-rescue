@@ -20,6 +20,9 @@ interface Game {
 export default function FindGamesPage() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [requestedGameIds, setRequestedGameIds] = useState<Set<number>>(new Set());
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
 
   useEffect(() => {
     fetchGames();
@@ -168,7 +171,11 @@ return (
           </div>
         </section>
       )}
-
+{toastMsg && (
+  <div className="mb-4 rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm text-white">
+    {toastMsg}
+  </div>
+)}
       {/* Upcoming Section */}
       <section>
         <div className="flex items-center gap-2 mb-4">
