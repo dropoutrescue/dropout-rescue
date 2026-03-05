@@ -386,7 +386,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
     {userParticipation ? (
       <div className="space-y-3">
         {/* Status Badge */}
-        <div className={`text-center py-4 rounded-lg ${
+        <div className={`text-center py-2 rounded-lg ${
           userParticipation.status === 'CONFIRMED' 
             ? 'bg-green-500/10 border-2 border-green-500' 
             : userParticipation.status === 'REQUESTED'
