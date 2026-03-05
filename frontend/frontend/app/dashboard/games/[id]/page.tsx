@@ -352,60 +352,62 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
-      {/* Share Button */}
-      <button
-        onClick={handleShareGame}
-        className={`w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 mb-6 transition-all ${
-          copied 
-            ? 'bg-green-500 text-white' 
-            : 'bg-zinc-800 text-white border border-zinc-700 hover:border-cyan-400'
-        }`}
-      >
-        {copied ? (
-          <>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Copied to Clipboard!
-          </>
-        ) : (
-          <>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-            </svg>
-            Share Game
-          </>
-        )}
-      </button>
+      
 
-      {/* Player Action Section */}
-      {!isOrganiser && (
-        <div className="mb-6">
-          {userParticipation ? (
-            <div className="space-y-3">
-{/* Status Badge */}
-<div className={`text-center py-4 rounded-lg ${
-  userParticipation.status === 'CONFIRMED' 
-    ? 'bg-green-500/10 border-2 border-green-500' 
-    : userParticipation.status === 'REQUESTED'
-    ? 'bg-yellow-500/10 border-2 border-yellow-500'
-    : 'bg-cyan-400/10 border-2 border-cyan-400'
-}`}>
-  <p className={`font-bold ${
-    userParticipation.status === 'CONFIRMED' 
-      ? 'text-green-500' 
-      : userParticipation.status === 'REQUESTED'
-      ? 'text-yellow-500'
-      : 'text-cyan-400'
-  }`}>
-    {userParticipation.status === 'CONFIRMED' && "You're confirmed for this game"}
-    {userParticipation.status === 'REQUESTED' && 'Request Pending'}
-    {userParticipation.status === 'RESERVE' && "You're on Reserve"}
-  </p>
-</div>
+{/* Share Button */}
+<button
+  onClick={handleShareGame}
+  className={`w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 mb-6 transition-all ${
+    copied 
+      ? 'bg-green-500 text-white' 
+      : 'bg-zinc-800 text-white border border-zinc-700 hover:border-cyan-400'
+  }`}
+>
+  {copied ? (
+    <>
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      </svg>
+      Copied to Clipboard!
+    </>
+  ) : (
+    <>
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+      </svg>
+      Share Game
+    </>
+  )}
+</button>
 
-              {/* Can't Make It + Message Organiser (for Confirmed or Reserve) */}
-              {(userParticipation.status === 'CONFIRMED' || userParticipation.status === 'RESERVE') && (
+{/* Player Action Section */}
+{!isOrganiser && (
+  <div className="mb-6">
+    {userParticipation ? (
+      <div className="space-y-3">
+        {/* Status Badge */}
+        <div className={`text-center py-4 rounded-lg ${
+          userParticipation.status === 'CONFIRMED' 
+            ? 'bg-green-500/10 border-2 border-green-500' 
+            : userParticipation.status === 'REQUESTED'
+            ? 'bg-yellow-500/10 border-2 border-yellow-500'
+            : 'bg-cyan-400/10 border-2 border-cyan-400'
+        }`}>
+          <p className={`font-bold ${
+            userParticipation.status === 'CONFIRMED' 
+              ? 'text-green-500' 
+              : userParticipation.status === 'REQUESTED'
+              ? 'text-yellow-500'
+              : 'text-cyan-400'
+          }`}>
+            {userParticipation.status === 'CONFIRMED' && "You're confirmed for this game"}
+            {userParticipation.status === 'REQUESTED' && 'Request Pending'}
+            {userParticipation.status === 'RESERVE' && "You're on Reserve"}
+          </p>
+        </div>
+
+        {/* Can't Make It + Message Organiser (for Confirmed or Reserve) */}
+        {(userParticipation.status === 'CONFIRMED' || userParticipation.status === 'RESERVE') && (
                 <div className="flex gap-2">
                   <button
                     onClick={handleWithdraw}
@@ -426,7 +428,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
               )}
             </div>
-          ) : game.status === 'OPEN' ? (
+          ) : game?.status === 'OPEN' ? (
             <button
               onClick={handleRequestSpot}
               disabled={actionLoading}
