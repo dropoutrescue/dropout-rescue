@@ -398,10 +398,9 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                     ? 'text-yellow-500'
                     : 'text-cyan-400'
                 }`}>
-                  {userParticipation.status === 'CONFIRMED' && (
-  <div className="text-green-400 font-semibold text-center py-2 border border-green-500/30 rounded-lg bg-green-500/10">
-    ✅ You're confirmed for this game
-  </div>
+                  <div className="text-green-400 font-semibold text-center py-1.5 border border-green-500/30 rounded-lg bg-green-500/10">
+  You're confirmed for this game
+</div>
 )}
                   {userParticipation.status === 'REQUESTED' && 'Request Pending'}
                   {userParticipation.status === 'RESERVE' && "You're on Reserve"}
