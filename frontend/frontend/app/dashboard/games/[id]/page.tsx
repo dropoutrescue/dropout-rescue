@@ -383,29 +383,26 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         <div className="mb-6">
           {userParticipation ? (
             <div className="space-y-3">
-              {/* Status Badge */}
-              <div className={`text-center py-4 rounded-lg ${
-                userParticipation.status === 'CONFIRMED' 
-                  ? 'bg-green-500/10 border-2 border-green-500' 
-                  : userParticipation.status === 'REQUESTED'
-                  ? 'bg-yellow-500/10 border-2 border-yellow-500'
-                  : 'bg-cyan-400/10 border-2 border-cyan-400'
-              }`}>
-                <p className={`font-bold ${
-                  userParticipation.status === 'CONFIRMED' 
-                    ? 'text-green-500' 
-                    : userParticipation.status === 'REQUESTED'
-                    ? 'text-yellow-500'
-                    : 'text-cyan-400'
-                }`}>
-                  <div className="text-green-400 font-semibold text-center py-1.5 border border-green-500/30 rounded-lg bg-green-500/10">
-  You're confirmed for this game
+{/* Status Badge */}
+<div className={`text-center py-4 rounded-lg ${
+  userParticipation.status === 'CONFIRMED' 
+    ? 'bg-green-500/10 border-2 border-green-500' 
+    : userParticipation.status === 'REQUESTED'
+    ? 'bg-yellow-500/10 border-2 border-yellow-500'
+    : 'bg-cyan-400/10 border-2 border-cyan-400'
+}`}>
+  <p className={`font-bold ${
+    userParticipation.status === 'CONFIRMED' 
+      ? 'text-green-500' 
+      : userParticipation.status === 'REQUESTED'
+      ? 'text-yellow-500'
+      : 'text-cyan-400'
+  }`}>
+    {userParticipation.status === 'CONFIRMED' && "You're confirmed for this game"}
+    {userParticipation.status === 'REQUESTED' && 'Request Pending'}
+    {userParticipation.status === 'RESERVE' && "You're on Reserve"}
+  </p>
 </div>
-)}
-                  {userParticipation.status === 'REQUESTED' && 'Request Pending'}
-                  {userParticipation.status === 'RESERVE' && "You're on Reserve"}
-                </p>
-              </div>
 
               {/* Can't Make It + Message Organiser (for Confirmed or Reserve) */}
               {(userParticipation.status === 'CONFIRMED' || userParticipation.status === 'RESERVE') && (
