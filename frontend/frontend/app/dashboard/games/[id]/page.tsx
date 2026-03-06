@@ -451,6 +451,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
           <p className="text-gray-400 text-sm mt-1">Manage player requests below</p>
         </div>
       )}
+      </div>
 
       {/* Pending Requests (Organiser Only) */}
       {isOrganiser && requestedPlayers.length > 0 && (
