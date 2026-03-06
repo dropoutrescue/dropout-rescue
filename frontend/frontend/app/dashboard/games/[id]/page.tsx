@@ -353,15 +353,6 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
       ? 'bg-green-500 text-white' 
       : 'bg-zinc-800 text-white border border-zinc-700 hover:border-cyan-400'
   }`}
-        <div className="border-t border-zinc-700 pt-4">
-          <p className="text-gray-400 text-sm">Organised by</p>
-          <p className="text-white font-medium">{game.organiser_name}</p>
-        </div>
-      </div>
-
-      
-
-
 >
   {copied ? (
     <>
@@ -379,6 +370,11 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
     </>
   )}
 </button>
+
+<div className="border-t border-zinc-700 pt-4">
+  <p className="text-gray-400 text-sm">Organised by</p>
+  <p className="text-white font-medium">{game.organiser_name}</p>
+</div>
 
 {/* Player Action Section */}
 {!isOrganiser && (
