@@ -1,5 +1,5 @@
 'use client';
-
+<h1>TEST MY GAMES</h1>
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import axios from 'axios';
