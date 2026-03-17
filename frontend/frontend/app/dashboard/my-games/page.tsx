@@ -38,28 +38,37 @@ export default function MyGamesPage() {
       fetchMyGames();
     }
   }, [token]);
-
-  const fetchMyGames = async () => {
+// Helper: Check if game is in the future
+const isUpcoming = (dateTime: string) => {
+  return new Date(dateTime) > new Date();
+};
+  async function fetchMyGames() {
     try {
       // Fetch all games
       const gamesResponse = await axios.get(`${API_URL}/games`);
       const allGames: Game[] = gamesResponse.data;
-      
+
       // Games I created
-      const created = allGames.filter(g => g.organiser_id === user?.id);
+      const created = allGames.filter(
+  g => g.organiser_id === user?.id && isUpcoming(g.date_time)
+);
       setCreatedGames(created);
 
       // Fetch games I joined
       if (token) {
         const joinedResponse = await axios.get(`${API_URL}/my-games/joined?token=${token}`);
-        setJoinedGames(joinedResponse.data);
+        const upcomingJoined = joinedResponse.data.filter(
+  (g: JoinedGame) => isUpcoming(g.date_time)
+);
+
+setJoinedGames(upcomingJoined);
       }
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400"></div></div>;
