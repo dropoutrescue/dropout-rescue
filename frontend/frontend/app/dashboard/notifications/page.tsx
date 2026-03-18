@@ -97,7 +97,12 @@ export default function NotificationsPage() {
         </Link>
         <h1 className="text-2xl font-bold text-white">Notifications</h1>
       </div>
-
+<button
+  onClick={() => setNotifications([])}
+  className="text-sm text-red-400 mb-4"
+>
+  Clear all
+</button>
       {notifications.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-4xl mb-4">🔔</p>
