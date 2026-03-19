@@ -98,7 +98,10 @@ export default function NotificationsPage() {
         <h1 className="text-2xl font-bold text-white">Notifications</h1>
       </div>
 <button
-  onClick={() => setNotifications([])}
+  onClick={() => {
+  setNotifications([]);
+  localStorage.setItem('notifications', JSON.stringify([]));
+}}
   className="text-sm text-red-400 mb-4"
 >
   Clear all
