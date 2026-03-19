@@ -37,17 +37,23 @@ export default function NotificationsPage() {
       setLoading(false);
     }
   };
-
-  const markAsRead = async (id: string) => {
+const handleClearAll = async () => {
+  try {
+    await axios.delete(`${API_URL}/notifications?token=${token}`);
+    setNotifications([]);
+  } catch (error) {
+    console.error('Error clearing notifications:', error);
+  }
+};
+  async function markAsRead(id: string) {
     try {
       await axios.post(`${API_URL}/notifications/${id}/read?token=${token}`);
-      setNotifications(notifications.map(n => 
-        n.id === id ? { ...n, read: true } : n
+      setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n
       ));
     } catch (error) {
       console.error('Error marking as read:', error);
     }
-  };
+  }
 
   const formatTimeAgo = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -87,6 +93,10 @@ export default function NotificationsPage() {
     );
   }
 
+  function handleClearAll(event: MouseEvent<HTMLButtonElement, MouseEvent>): void {
+    throw new Error('Function not implemented.');
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-4">
       <div className="flex items-center gap-3 mb-6">
@@ -98,10 +108,7 @@ export default function NotificationsPage() {
         <h1 className="text-2xl font-bold text-white">Notifications</h1>
       </div>
 <button
-  onClick={() => {
-  setNotifications([]);
-  localStorage.setItem('notifications', JSON.stringify([]));
-}}
+  onClick={handleClearAll}
   className="text-sm text-red-400 mb-4"
 >
   Clear all
