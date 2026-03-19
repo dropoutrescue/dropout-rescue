@@ -37,7 +37,7 @@ export default function NotificationsPage() {
       setLoading(false);
     }
   };
-  async function handleClearAll(): void | Promise<void> {
+  const handleClearAll = async () => {
     try {
       await axios.delete(`${API_URL}/notifications?token=${token}`);
       setNotifications([]);
@@ -93,9 +93,7 @@ export default function NotificationsPage() {
     );
   }
 
-  function handleClearAll(event: MouseEvent<HTMLButtonElement, MouseEvent>): void {
-    throw new Error('Function not implemented.');
-  }
+  
 
   return (
     <div className="max-w-2xl mx-auto p-4">
