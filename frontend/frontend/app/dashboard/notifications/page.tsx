@@ -43,11 +43,12 @@ export default function NotificationsPage() {
     console.log('clear success', res.data);
     setNotifications([]);
     alert('clear worked');
-  } catch (error) {
-    console.error('Error clearing notifications:', error);
-    alert('clear failed');
-  }
-};
+  } catch (error: any) {
+  console.error('Error clearing notifications:', error);
+  alert(
+    `clear failed: ${error?.response?.status || 'no-status'} - ${error?.response?.data?.detail || error?.message || 'unknown'}`
+  );
+}
   
   async function markAsRead(id: string) {
     try {
