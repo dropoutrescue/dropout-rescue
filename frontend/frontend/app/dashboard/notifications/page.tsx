@@ -37,9 +37,13 @@ export default function NotificationsPage() {
       setLoading(false);
     }
   };
-  const handleClearAll = async () => {
-  console.log('clear all clicked');
-  setNotifications([]);
+ const handleClearAll = async () => {
+  try {
+    await axios.delete(`${API_URL}/api/notifications?token=${token}`);
+    setNotifications([]);
+  } catch (error) {
+    console.error('Error clearing notifications:', error);
+  }
 };
   
   async function markAsRead(id: string) {
