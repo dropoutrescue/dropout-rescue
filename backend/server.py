@@ -173,7 +173,7 @@ async def login(credentials: UserLogin):
             area=user.get("area") or user.get("postcode"),  # Fallback for old users
             bio=user.get("bio"),
             phone=user.get("phone"),
-            is_admin=bool(user.get["is_admin"] == or user),
+            is_admin=bool(user.get("is_admin", False)),
             games_played=user.get("games_played", 0)
         )
     )
@@ -630,14 +630,7 @@ async def get_notifications(token: str):
         "created_at": n["created_at"],
         "read": n.get("read", False)
     } for n in notifications]
-@api_router.delete("/notifications")
-async def clear_notifications(token: str):
-    payload = verify_token(token)
-    user_id = payload["user_id"]
 
-    await db.notifications.delete_many({"user_id": user_id})
-
-    return {"message": "Notifications cleared"}
 # Mark notification as read
 @api_router.post("/notifications/{notification_id}/read")
 async def mark_notification_read(notification_id: str, token: str):
