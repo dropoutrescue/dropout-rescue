@@ -630,7 +630,14 @@ async def get_notifications(token: str):
         "created_at": n["created_at"],
         "read": n.get("read", False)
     } for n in notifications]
+@api_router.delete("/notifications")
+async def clear_notifications(token: str):
+    payload = verify_token(token)
+    user_id = payload["user_id"]
 
+    await db.notifications.delete_many({"user_id": user_id})
+
+    return {"message": "Notifications cleared"}
 # Mark notification as read
 @api_router.post("/notifications/{notification_id}/read")
 async def mark_notification_read(notification_id: str, token: str):
