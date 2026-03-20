@@ -41,7 +41,7 @@ export default function NotificationsPage() {
   console.log('clear all clicked');
   setNotifications([]);
 };
-  }
+  
   async function markAsRead(id: string) {
     try {
       await axios.post(`${API_URL}/notifications/${id}/read?token=${token}`);
