@@ -39,10 +39,13 @@ export default function NotificationsPage() {
   };
  const handleClearAll = async () => {
   try {
-    await axios.delete(`${API_URL}/api/notifications?token=${token}`);
+    const res = await axios.delete(`${API_URL}/api/notifications?token=${token}`);
+    console.log('clear success', res.data);
     setNotifications([]);
+    alert('clear worked');
   } catch (error) {
     console.error('Error clearing notifications:', error);
+    alert('clear failed');
   }
 };
   
