@@ -473,22 +473,31 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                       </div>
                       {player.user_area && <p className="text-gray-400 text-sm">{player.user_area}</p>}
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleApprove(player.id)}
-                        disabled={actionLoading}
-                        className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-400 transition-colors disabled:opacity-50"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleDecline(player.id)}
-                        disabled={actionLoading}
-                        className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-400 transition-colors disabled:opacity-50"
-                      >
-                        Decline
-                      </button>
-                    </div>
+                   <div className="flex gap-2">
+  <button
+    onClick={() => handleApprove(player.id)}
+    disabled={actionLoading}
+    className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold"
+  >
+    Approve
+  </button>
+
+  <a
+    href={`https://wa.me/447000000000?text=You're%20in%20for%20the%20game%20👍`}
+    target="_blank"
+    className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-bold"
+  >
+    WhatsApp
+  </a>
+
+  <button
+    onClick={() => handleDecline(player.id)}
+    disabled={actionLoading}
+    className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold"
+  >
+    Decline
+  </button>
+</div>
                   </div>
                 </div>
               );
