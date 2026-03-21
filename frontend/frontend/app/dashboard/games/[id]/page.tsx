@@ -483,7 +483,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   </button>
 
   <a
-    href={`https://wa.me/447000000000?text=You're%20in%20for%20the%20game%20👍`}
+   href={`https://wa.me/447000000000?text=${encodeURIComponent(`You're confirmed 👍\n\nGame: ${game?.venue}\nTime: ${formatShortDate(game?.date_time)}\n\nSee you there`)}`}
     target="_blank"
     className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-bold"
   >
