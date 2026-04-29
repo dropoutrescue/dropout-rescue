@@ -118,12 +118,26 @@ class ParticipantRequest(BaseModel):
 class ParticipantResponse(BaseModel):
     id: str
     game_id: str
-    user_id: str
+    user_id: Optional[str] = None
     user_name: str
     user_area: Optional[str] = None
     user_phone: Optional[str] = None
     user_games_played: int = 0
     status: str  # "REQUESTED", "CONFIRMED", "RESERVE"
+
+class PublicGameResponse(BaseModel):
+    id: str
+    venue: str
+    date_time: str
+    format: str
+    players_needed: int
+    status: str
+    confirmed_count: int
+    organiser_name: str
+
+class QuickJoinRequest(BaseModel):
+    name: str
+    phone: str
 
 # Auth endpoints
 @api_router.post("/auth/signup", response_model=TokenResponse)
@@ -216,6 +230,70 @@ async def update_profile(user_data: UserUpdate, token: str):
         is_admin=(updated_user["email"] == ADMIN_EMAIL),
         games_played=updated_user.get("games_played", 0)
     )
+
+@api_router.get("/public/games/{game_id}", response_model=PublicGameResponse)
+async def get_public_game(game_id: str):
+    try:
+        game = await db.games.find_one({"_id": ObjectId(game_id)})
+    except:
+        raise HTTPException(status_code=404, detail="Game not found")
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    confirmed_count = await db.participants.count_documents({
+        "game_id": game_id,
+        "status": "CONFIRMED"
+    })
+    return PublicGameResponse(
+        id=str(game["_id"]),
+        venue=game["venue"],
+        date_time=game["date_time"],
+        format=game["format"],
+        players_needed=game["players_needed"],
+        status=game["status"],
+        confirmed_count=confirmed_count,
+        organiser_name=game["organiser_name"]
+    )
+
+@api_router.post("/public/games/{game_id}/quick-join")
+async def quick_join_game(game_id: str, request: QuickJoinRequest):
+    if not request.name.strip():
+        raise HTTPException(status_code=400, detail="Name is required")
+    if not request.phone.strip():
+        raise HTTPException(status_code=400, detail="Phone is required")
+    try:
+        game = await db.games.find_one({"_id": ObjectId(game_id)})
+    except:
+        raise HTTPException(status_code=404, detail="Game not found")
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    if game["status"] != "OPEN":
+        raise HTTPException(status_code=400, detail="This game is no longer open")
+    existing = await db.participants.find_one({
+        "game_id": game_id,
+        "user_phone": request.phone.strip()
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="This phone number has already requested to join")
+    await db.participants.insert_one({
+        "game_id": game_id,
+        "user_id": None,
+        "user_name": request.name.strip(),
+        "user_phone": request.phone.strip(),
+        "user_area": None,
+        "user_games_played": 0,
+        "status": "REQUESTED",
+        "created_at": datetime.utcnow()
+    })
+    await db.notifications.insert_one({
+        "user_id": game["organiser_id"],
+        "type": "JOIN_REQUEST",
+        "message": f"{request.name.strip()} wants to join {game['venue']}",
+        "game_id": game_id,
+        "player_name": request.name.strip(),
+        "created_at": datetime.utcnow(),
+        "read": False
+    })
+    return {"message": "Request sent"}
 
 # Game endpoints
 @api_router.post("/games", response_model=GameResponse)
@@ -443,7 +521,7 @@ async def get_game_participants(game_id: str):
     
     result = []
     for p in participants:
-        user = await db.users.find_one({"_id": ObjectId(p["user_id"])})
+        user = await db.users.find_one({"_id": ObjectId(p["user_id"])}) if p.get("user_id") else None
         games_played = user.get("games_played", 0) if user else p.get("user_games_played", 0)
         user_phone = user.get("phone") if user else p.get("user_phone")
 

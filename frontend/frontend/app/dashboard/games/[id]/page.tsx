@@ -52,6 +52,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   
   const { user, token } = useAuth();
   const router = useRouter();
@@ -243,6 +244,19 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
       }).catch(() => {
         // Double fallback: show alert with message
         alert(`Copy this message to send to organiser:\n\n${message}`);
+      });
+    }
+  };
+
+  const handleShareJoinLink = () => {
+    if (!game) return;
+    const joinUrl = `${window.location.origin}/join/${game.id}`;
+    if (navigator.share) {
+      navigator.share({ title: `Join ${game.venue}`, url: joinUrl }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(joinUrl).then(() => {
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
       });
     }
   };
@@ -461,6 +475,16 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         <div className="bg-cyan-400/10 border-2 border-cyan-400 rounded-lg p-4 mb-6 text-center">
           <p className="text-cyan-400 font-bold">You're the Organiser</p>
           <p className="text-gray-400 text-sm mt-1">Manage player requests below</p>
+          <button
+            onClick={handleShareJoinLink}
+            className={`mt-3 w-full py-2 rounded-lg text-sm font-semibold transition-all ${
+              linkCopied
+                ? 'bg-green-500 text-white'
+                : 'bg-cyan-400/20 text-cyan-400 hover:bg-cyan-400/30'
+            }`}
+          >
+            {linkCopied ? 'Link Copied!' : 'Copy Join Link'}
+          </button>
         </div>
       )}
       </div>
