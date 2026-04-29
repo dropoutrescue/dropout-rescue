@@ -105,6 +105,12 @@ class GameResponse(BaseModel):
     confirmed_count: int = 0
     reserve_count: int = 0
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    area: Optional[str] = None
+    bio: Optional[str] = None
+    phone: Optional[str] = None
+
 class ParticipantRequest(BaseModel):
     game_id: str
     action: str  # "REQUESTED" or "RESERVE"
@@ -176,6 +182,39 @@ async def login(credentials: UserLogin):
             is_admin=bool(user.get("is_admin", False)),
             games_played=user.get("games_played", 0)
         )
+    )
+
+@api_router.put("/users/me", response_model=UserResponse)
+async def update_profile(user_data: UserUpdate, token: str):
+    payload = verify_token(token)
+    user_id = payload["user_id"]
+
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user_data.bio and len(user_data.bio) > 120:
+        raise HTTPException(status_code=400, detail="Bio must be 120 characters or less")
+
+    update_fields = {k: v for k, v in user_data.dict().items() if v is not None}
+
+    if update_fields:
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": update_fields}
+        )
+
+    updated_user = await db.users.find_one({"_id": ObjectId(user_id)})
+
+    return UserResponse(
+        id=str(updated_user["_id"]),
+        name=updated_user["name"],
+        email=updated_user["email"],
+        area=updated_user.get("area"),
+        bio=updated_user.get("bio"),
+        phone=updated_user.get("phone"),
+        is_admin=(updated_user["email"] == ADMIN_EMAIL),
+        games_played=updated_user.get("games_played", 0)
     )
 
 # Game endpoints
@@ -404,17 +443,17 @@ async def get_game_participants(game_id: str):
     
     result = []
     for p in participants:
-        # Fetch the latest games_played count from user
         user = await db.users.find_one({"_id": ObjectId(p["user_id"])})
         games_played = user.get("games_played", 0) if user else p.get("user_games_played", 0)
-        
+        user_phone = user.get("phone") if user else p.get("user_phone")
+
         result.append(ParticipantResponse(
             id=str(p["_id"]),
             game_id=p["game_id"],
             user_id=p["user_id"],
             user_name=p["user_name"],
             user_area=p.get("user_area") or p.get("user_position"),  # Fallback for old data
-            user_phone=p.get("user_phone"),
+            user_phone=user_phone,
             user_games_played=games_played,
             status=p["status"]
         ))

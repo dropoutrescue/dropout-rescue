@@ -23,6 +23,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (data: SignupData) => Promise<void>;
   logout: () => void;
+  updateProfile: (data: { name?: string; area?: string; bio?: string; phone?: string }) => Promise<void>;
 }
 
 interface SignupData {
@@ -80,6 +81,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(userData);
   };
 
+  const updateProfile = async (data: { name?: string; area?: string; bio?: string; phone?: string }) => {
+    const response = await axios.put(`${API_URL}/users/me?token=${token}`, data);
+    const updatedUser = response.data;
+    localStorage.setItem('user_data', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
   const logout = () => {
     // Clear all auth-related data from localStorage
     localStorage.removeItem('auth_token');
@@ -98,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, signup, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

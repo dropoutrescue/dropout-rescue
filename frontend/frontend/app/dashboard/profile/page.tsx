@@ -1,9 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
+
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    area: user?.area || '',
+    bio: user?.bio || '',
+    phone: user?.phone || '',
+  });
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -19,7 +29,28 @@ export default function ProfilePage() {
     }
   };
 
-  // Get reliability badge
+  const handleEdit = () => {
+    setForm({
+      name: user?.name || '',
+      area: user?.area || '',
+      bio: user?.bio || '',
+      phone: user?.phone || '',
+    });
+    setEditing(true);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updateProfile(form);
+      setEditing(false);
+    } catch (error: any) {
+      alert(error.response?.data?.detail || 'Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const getReliabilityBadge = (gamesPlayed: number) => {
     if (gamesPlayed === 0) return { emoji: '🔵', label: 'New' };
     if (gamesPlayed <= 5) return { emoji: '🟡', label: `Getting Started (${gamesPlayed} games)` };
@@ -40,8 +71,7 @@ export default function ProfilePage() {
         </div>
         <h1 className="text-2xl font-bold text-white">{user.name}</h1>
         <p className="text-gray-400">{user.email}</p>
-        
-        {/* Reliability Badge */}
+
         <div className="mt-3 inline-flex items-center gap-2 bg-zinc-900 px-4 py-2 rounded-full">
           <span className="text-lg">{badge.emoji}</span>
           <span className="text-sm text-gray-300">{badge.label}</span>
@@ -49,36 +79,106 @@ export default function ProfilePage() {
       </div>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-bold text-white mb-4">About</h2>
-        
-        <div className="space-y-4">
-          {user.area && (
-            <div className="flex justify-between">
-              <span className="text-gray-400">Area</span>
-              <span className="text-white font-semibold">{user.area}</span>
-            </div>
-          )}
-          {user.bio && (
-            <div>
-              <span className="text-gray-400 block mb-1">Bio</span>
-              <p className="text-white">{user.bio}</p>
-            </div>
-          )}
-          {user.phone && (
-            <div className="flex justify-between">
-              <span className="text-gray-400">Phone</span>
-              <span className="text-white font-semibold">{user.phone}</span>
-            </div>
-          )}
-          {!user.area && !user.bio && !user.phone && (
-            <p className="text-gray-500 text-sm italic">No additional info added</p>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold text-white">About</h2>
+          {!editing && (
+            <button
+              onClick={handleEdit}
+              className="text-cyan-400 text-sm font-medium hover:text-cyan-300 transition-colors"
+            >
+              Edit
+            </button>
           )}
         </div>
+
+        {editing ? (
+          <div className="space-y-4">
+            <div>
+              <label className="text-gray-400 text-sm block mb-1">Name</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                className="w-full bg-zinc-800 text-white rounded-lg px-3 py-2 border border-zinc-700 focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-gray-400 text-sm block mb-1">Phone</label>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                placeholder="e.g. 07700 900000"
+                className="w-full bg-zinc-800 text-white rounded-lg px-3 py-2 border border-zinc-700 focus:border-cyan-400 focus:outline-none"
+              />
+              <p className="text-gray-500 text-xs mt-1">Used so organisers can WhatsApp you when confirmed</p>
+            </div>
+            <div>
+              <label className="text-gray-400 text-sm block mb-1">Area</label>
+              <input
+                type="text"
+                value={form.area}
+                onChange={e => setForm(f => ({ ...f, area: e.target.value }))}
+                placeholder="e.g. Arnold, City Centre"
+                className="w-full bg-zinc-800 text-white rounded-lg px-3 py-2 border border-zinc-700 focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-gray-400 text-sm block mb-1">Bio <span className="text-gray-500">({form.bio.length}/120)</span></label>
+              <textarea
+                value={form.bio}
+                onChange={e => setForm(f => ({ ...f, bio: e.target.value.slice(0, 120) }))}
+                rows={3}
+                className="w-full bg-zinc-800 text-white rounded-lg px-3 py-2 border border-zinc-700 focus:border-cyan-400 focus:outline-none resize-none"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 bg-cyan-400 text-black font-bold py-2 rounded-lg hover:bg-cyan-300 transition-colors disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                disabled={saving}
+                className="flex-1 bg-zinc-800 text-white font-semibold py-2 rounded-lg border border-zinc-700 hover:border-zinc-500 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {user.phone && (
+              <div className="flex justify-between">
+                <span className="text-gray-400">Phone</span>
+                <span className="text-white font-semibold">{user.phone}</span>
+              </div>
+            )}
+            {user.area && (
+              <div className="flex justify-between">
+                <span className="text-gray-400">Area</span>
+                <span className="text-white font-semibold">{user.area}</span>
+              </div>
+            )}
+            {user.bio && (
+              <div>
+                <span className="text-gray-400 block mb-1">Bio</span>
+                <p className="text-white">{user.bio}</p>
+              </div>
+            )}
+            {!user.area && !user.bio && !user.phone && (
+              <p className="text-gray-500 text-sm italic">No additional info added</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">
         <h2 className="text-lg font-bold text-white">Account Actions</h2>
-        
+
         <button
           onClick={handleLogout}
           className="w-full bg-red-500 text-white font-bold py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
