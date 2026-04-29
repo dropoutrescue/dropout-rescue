@@ -157,18 +157,22 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
 
   const handleApprove = async (player: Participant) => {
     setActionLoading(true);
+    // Open a blank window now, while still in the synchronous click handler,
+    // so the browser doesn't block it as a popup after the awaits below.
+    const waWindow = player.user_phone ? window.open('', '_blank') : null;
     try {
       await axios.post(`${API_URL}/participants/${player.id}/approve?token=${token}`);
       await fetchGameDetails();
-      if (player.user_phone && game) {
+      if (waWindow && player.user_phone && game) {
         let phone = player.user_phone.replace(/\s+/g, '').replace(/^0/, '44');
         if (!phone.startsWith('+') && !phone.startsWith('44')) {
           phone = '44' + phone;
         }
         const message = `You're confirmed 👍\nGame: ${game.venue}\nTime: ${formatShortDate(game.date_time)}\nSee you there`;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+        waWindow.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
       }
     } catch (error: any) {
+      waWindow?.close();
       alert(error.response?.data?.detail || 'Failed to approve');
     } finally {
       setActionLoading(false);
