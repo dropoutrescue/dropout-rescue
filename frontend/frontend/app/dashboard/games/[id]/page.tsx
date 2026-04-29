@@ -155,11 +155,19 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
     }
   };
 
-  const handleApprove = async (participantId: string) => {
+  const handleApprove = async (player: Participant) => {
     setActionLoading(true);
     try {
-      await axios.post(`${API_URL}/participants/${participantId}/approve?token=${token}`);
+      await axios.post(`${API_URL}/participants/${player.id}/approve?token=${token}`);
       await fetchGameDetails();
+      if (player.user_phone && game) {
+        let phone = player.user_phone.replace(/\s+/g, '').replace(/^0/, '44');
+        if (!phone.startsWith('+') && !phone.startsWith('44')) {
+          phone = '44' + phone;
+        }
+        const message = `You're confirmed 👍\nGame: ${game.venue}\nTime: ${formatShortDate(game.date_time)}\nSee you there`;
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+      }
     } catch (error: any) {
       alert(error.response?.data?.detail || 'Failed to approve');
     } finally {
@@ -475,20 +483,12 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                     </div>
                    <div className="flex gap-2">
   <button
-    onClick={() => handleApprove(player.id)}
+    onClick={() => handleApprove(player)}
     disabled={actionLoading}
     className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold"
   >
-    Approve
+    Approve & Message
   </button>
-
-  <a
-   href={`https://wa.me/447000000000?text=${encodeURIComponent(`You're confirmed 👍\n\nGame: ${game?.venue}\nTime: ${formatShortDate(game?.date_time)}\n\nSee you there`)}`}
-    target="_blank"
-    className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-bold"
-  >
-    WhatsApp
-  </a>
 
   <button
     onClick={() => handleDecline(player.id)}
@@ -570,7 +570,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                     {isOrganiser && (
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleApprove(player.id)}
+                          onClick={() => handleApprove(player)}
                           disabled={actionLoading || game.players_needed === 0}
                           className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors disabled:opacity-50"
                           title={game.players_needed === 0 ? 'Game is full' : 'Move to confirmed'}
