@@ -407,23 +407,27 @@ async def get_game(game_id: str):
 @api_router.delete("/games/{game_id}")
 async def delete_game(game_id: str, token: str):
     payload = verify_token(token)
-    user = await db.users.find_one({"_id": ObjectId(payload["user_id"])})
-    
-    if not user or user["email"] != ADMIN_EMAIL:
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
+    user_id = payload["user_id"]
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     try:
-        # Delete the game
-        result = await db.games.delete_one({"_id": ObjectId(game_id)})
-        if result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="Game not found")
-        
-        # Delete all participants for this game
+        game = await db.games.find_one({"_id": ObjectId(game_id)})
+    except:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    if user["email"] != ADMIN_EMAIL and game["organiser_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Not authorised to delete this game")
+
+    try:
+        await db.games.delete_one({"_id": ObjectId(game_id)})
         await db.participants.delete_many({"game_id": game_id})
-        
         return {"message": "Game deleted successfully"}
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error deleting game {game_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to delete game: {str(e)}")

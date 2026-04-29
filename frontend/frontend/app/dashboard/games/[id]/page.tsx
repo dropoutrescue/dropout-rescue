@@ -55,6 +55,8 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const [linkCopied, setLinkCopied] = useState(false);
   const [repeatLoading, setRepeatLoading] = useState(false);
   const [repeatError, setRepeatError] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   
   const { user, token } = useAuth();
   const router = useRouter();
@@ -247,6 +249,20 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         // Double fallback: show alert with message
         alert(`Copy this message to send to organiser:\n\n${message}`);
       });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Delete this game? This cannot be undone.')) return;
+    setDeleteLoading(true);
+    setDeleteError('');
+    try {
+      await axios.delete(`${API_URL}/games/${game?.id}?token=${token}`);
+      router.push('/dashboard/games');
+    } catch (error: any) {
+      setDeleteError(error.response?.data?.detail || 'Failed to delete game');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -651,6 +667,20 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
           </div>
         )}
       </div>
+
+      {/* Delete Game — organiser only */}
+      {isOrganiser && (
+        <div className="mt-4">
+          {deleteError && <p className="text-red-400 text-sm mb-2">{deleteError}</p>}
+          <button
+            onClick={handleDelete}
+            disabled={deleteLoading}
+            className="w-full py-3 rounded-lg border border-red-500/40 text-red-500 font-semibold hover:bg-red-500/10 transition-colors disabled:opacity-50"
+          >
+            {deleteLoading ? 'Deleting...' : 'Delete Game'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
