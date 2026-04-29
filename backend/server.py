@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from bson import ObjectId
 import jwt
@@ -138,6 +138,9 @@ class PublicGameResponse(BaseModel):
 class QuickJoinRequest(BaseModel):
     name: str
     phone: str
+
+class RepeatGameRequest(BaseModel):
+    date_time: Optional[str] = None
 
 # Auth endpoints
 @api_router.post("/auth/signup", response_model=TokenResponse)
@@ -424,6 +427,61 @@ async def delete_game(game_id: str, token: str):
     except Exception as e:
         logger.error(f"Error deleting game {game_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to delete game: {str(e)}")
+
+@api_router.post("/games/{game_id}/repeat", response_model=GameResponse)
+async def repeat_game(game_id: str, token: str, body: RepeatGameRequest):
+    payload = verify_token(token)
+    user_id = payload["user_id"]
+
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    try:
+        original = await db.games.find_one({"_id": ObjectId(game_id)})
+    except:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    if not original:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    if original["organiser_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Only the organiser can repeat this game")
+
+    if body.date_time:
+        new_date_time = body.date_time
+    else:
+        new_date_time = (datetime.fromisoformat(original["date_time"]) + timedelta(days=7)).isoformat()
+
+    new_game = {
+        "organiser_id": user_id,
+        "organiser_name": user["name"],
+        "venue": original["venue"],
+        "date_time": new_date_time,
+        "players_needed": original["players_needed"],
+        "format": original["format"],
+        "subs": original.get("subs"),
+        "notes": original.get("notes"),
+        "status": "OPEN",
+        "created_at": datetime.utcnow()
+    }
+
+    result = await db.games.insert_one(new_game)
+
+    return GameResponse(
+        id=str(result.inserted_id),
+        organiser_id=new_game["organiser_id"],
+        organiser_name=new_game["organiser_name"],
+        venue=new_game["venue"],
+        date_time=new_game["date_time"],
+        players_needed=new_game["players_needed"],
+        format=new_game["format"],
+        subs=new_game.get("subs"),
+        notes=new_game.get("notes"),
+        status=new_game["status"],
+        confirmed_count=0,
+        reserve_count=0
+    )
 
 # Get games user has joined (as participant)
 @api_router.get("/my-games/joined")

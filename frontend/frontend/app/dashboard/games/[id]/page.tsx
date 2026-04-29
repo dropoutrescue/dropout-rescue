@@ -53,6 +53,8 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const [actionLoading, setActionLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [repeatLoading, setRepeatLoading] = useState(false);
+  const [repeatError, setRepeatError] = useState('');
   
   const { user, token } = useAuth();
   const router = useRouter();
@@ -245,6 +247,20 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         // Double fallback: show alert with message
         alert(`Copy this message to send to organiser:\n\n${message}`);
       });
+    }
+  };
+
+  const handleRepeat = async () => {
+    if (!game) return;
+    setRepeatLoading(true);
+    setRepeatError('');
+    try {
+      const res = await axios.post(`${API_URL}/games/${game.id}/repeat?token=${token}`, {});
+      router.push(`/dashboard/games/${res.data.id}`);
+    } catch (error: any) {
+      setRepeatError(error.response?.data?.detail || 'Failed to repost game');
+    } finally {
+      setRepeatLoading(false);
     }
   };
 
@@ -472,7 +488,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
 
       {/* Organiser Badge */}
       {isOrganiser && (
-        <div className="bg-cyan-400/10 border-2 border-cyan-400 rounded-lg p-4 mb-6 text-center">
+        <div className="bg-cyan-400/10 border-2 border-cyan-400 rounded-lg p-4 mb-4 text-center">
           <p className="text-cyan-400 font-bold">You're the Organiser</p>
           <p className="text-gray-400 text-sm mt-1">Manage player requests below</p>
           <button
@@ -484,6 +500,20 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
             }`}
           >
             {linkCopied ? 'Link Copied!' : 'Copy Join Link'}
+          </button>
+        </div>
+      )}
+
+      {/* Repeat Game — only shown for past games */}
+      {isOrganiser && new Date(game.date_time) < new Date() && (
+        <div className="mb-6">
+          {repeatError && <p className="text-red-400 text-sm mb-2">{repeatError}</p>}
+          <button
+            onClick={handleRepeat}
+            disabled={repeatLoading}
+            className="w-full bg-zinc-800 border border-zinc-700 text-white font-semibold py-3 rounded-lg hover:border-cyan-400 transition-colors disabled:opacity-50"
+          >
+            {repeatLoading ? 'Creating...' : '↻ Post again next week'}
           </button>
         </div>
       )}
