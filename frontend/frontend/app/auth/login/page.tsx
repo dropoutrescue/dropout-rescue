@@ -17,12 +17,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      return;
-    }
-
+    if (!email || !password) { setError('Please fill in all fields'); return; }
     setLoading(true);
     try {
       await login(email, password);
@@ -35,57 +30,47 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Image
-            src="/logo.png"
-            alt="Dropout Rescue"
-            width={200}
-            height={200}
-            className="mx-auto mb-4"
-          />
-          <p className="text-gray-400">Built for local football. Powered by the community.</p>
+          <Image src="/logo.png" alt="Dropout Rescue" width={200} height={200} className="mx-auto mb-4" />
+          <p className="text-secondary text-sm">Built for local football. Powered by the community.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {error && (
-            <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg">
+            <div className="bg-red-500/10 border border-red-500/40 text-red-400 px-4 py-3 rounded-control text-sm">
               {error}
             </div>
           )}
 
-          <div>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            />
-          </div>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 bg-surface border border-white/6 rounded-control text-white placeholder-tertiary focus:outline-none focus:border-phosphor transition-colors"
+          />
 
-          <div>
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            />
-          </div>
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 bg-surface border border-white/6 rounded-control text-white placeholder-tertiary focus:outline-none focus:border-phosphor transition-colors"
+          />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-cyan-400 text-black font-bold py-3 rounded-lg hover:bg-cyan-500 transition-colors disabled:opacity-50"
+            className="w-full bg-phosphor text-black font-bold py-3 rounded-control hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Logging in…' : 'Log in'}
           </button>
 
-          <p className="text-center text-gray-400">
-            Don't have an account?{' '}
-            <Link href="/auth/signup" className="text-cyan-400 hover:underline font-bold">
+          <p className="text-center text-secondary text-sm pt-1">
+            No account?{' '}
+            <Link href="/auth/signup" className="text-phosphor font-bold hover:opacity-80">
               Sign up
             </Link>
           </p>

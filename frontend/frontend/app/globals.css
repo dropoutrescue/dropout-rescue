@@ -1,7 +1,16 @@
 @import "tailwindcss";
 
+@theme {
+  --color-bg:       #0a0d10;
+  --color-surface:  #15191f;
+  --color-phosphor: #00ff88;
+  --color-warn:     #ffb547;
+  --color-secondary: #8b95a3;
+  --color-tertiary:  #6b7280;
+}
+
 :root {
-  --background: #0c0c0c;
+  --background: #0a0d10;
   --foreground: #ffffff;
 }
 
@@ -9,10 +18,19 @@ body {
   color: var(--foreground);
   background: var(--background);
   min-height: 100vh;
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .text-balance  { text-wrap: balance; }
+  .rounded-control { border-radius: 4px; }
+  .rounded-card    { border-radius: 6px; }
+  .microlabel {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
   }
 }

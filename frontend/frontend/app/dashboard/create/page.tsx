@@ -9,13 +9,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function CreateGamePage() {
   const [formData, setFormData] = useState({
-    venue: '',
-    date: '',
-    time: '',
-    players_needed: '',
-    format: '5s',
-    subs: '',
-    notes: '',
+    venue: '', date: '', time: '', players_needed: '', format: '5s', subs: '', notes: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,28 +19,20 @@ export default function CreateGamePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     if (!formData.venue || !formData.date || !formData.time || !formData.players_needed) {
       setError('Please fill in all required fields');
       return;
     }
-
     const playersNum = parseInt(formData.players_needed);
-    if (isNaN(playersNum) || playersNum < 1) {
-      setError('Please enter a valid number of players');
-      return;
-    }
+    if (isNaN(playersNum) || playersNum < 1) { setError('Enter a valid number of players'); return; }
 
     setLoading(true);
     try {
-      const dateTimeString = `${formData.date}T${formData.time}:00`;
-      const dateTime = new Date(dateTimeString);
-
       await axios.post(
         `${API_URL}/games`,
         {
           venue: formData.venue,
-          date_time: dateTime.toISOString(),
+          date_time: new Date(`${formData.date}T${formData.time}:00`).toISOString(),
           players_needed: playersNum,
           format: formData.format,
           subs: formData.subs ? parseFloat(formData.subs) : null,
@@ -54,8 +40,6 @@ export default function CreateGamePage() {
         },
         { params: { token } }
       );
-
-      alert('Game created successfully!');
       router.push('/dashboard/games');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to create game');
@@ -64,83 +48,55 @@ export default function CreateGamePage() {
     }
   };
 
-  const getTodayDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  };
+  const inputCls = 'w-full px-4 py-3 bg-surface border border-white/6 rounded-control text-white placeholder-tertiary focus:outline-none focus:border-phosphor transition-colors';
+  const getTodayDate = () => new Date().toISOString().split('T')[0];
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <div className="text-center mb-8">
-        <p className="text-4xl mb-4">⚽</p>
-        <h1 className="text-2xl font-bold text-white">Create Game</h1>
-      </div>
+      <h1 className="text-2xl font-extrabold tracking-tight text-white mb-6">Create game</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg">
-            {error}
-          </div>
+          <div className="bg-red-500/10 border border-red-500/40 text-red-400 px-4 py-3 rounded-control text-sm">{error}</div>
         )}
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">Venue *</label>
-          <input
-            type="text"
-            placeholder="e.g., Goals Nottingham"
-            value={formData.venue}
-            onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-            className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-          />
+          <label className="block text-secondary text-xs font-bold uppercase tracking-widest mb-2">Venue *</label>
+          <input type="text" placeholder="e.g. Goals Nottingham" value={formData.venue}
+            onChange={(e) => setFormData({ ...formData, venue: e.target.value })} className={inputCls} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Date *</label>
-            <input
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              min={getTodayDate()}
-              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            />
+            <label className="block text-secondary text-xs font-bold uppercase tracking-widest mb-2">Date *</label>
+            <input type="date" value={formData.date} min={getTodayDate()}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })} className={inputCls} />
           </div>
-
           <div>
-            <label className="block text-sm text-gray-400 mb-2">Time *</label>
-            <input
-              type="time"
-              value={formData.time}
-              onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            />
+            <label className="block text-secondary text-xs font-bold uppercase tracking-widest mb-2">Time *</label>
+            <input type="time" value={formData.time}
+              onChange={(e) => setFormData({ ...formData, time: e.target.value })} className={inputCls} />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">Players Needed *</label>
-          <input
-            type="number"
-            placeholder="e.g., 6"
-            min="1"
-            value={formData.players_needed}
-            onChange={(e) => setFormData({ ...formData, players_needed: e.target.value })}
-            className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-          />
+          <label className="block text-secondary text-xs font-bold uppercase tracking-widest mb-2">Players needed *</label>
+          <input type="number" placeholder="e.g. 6" min="1" value={formData.players_needed}
+            onChange={(e) => setFormData({ ...formData, players_needed: e.target.value })} className={inputCls} />
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">Format *</label>
-          <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+          <label className="block text-secondary text-xs font-bold uppercase tracking-widest mb-2">Format *</label>
+          <div className="grid grid-cols-7 gap-1.5">
             {['5s', '6s', '7s', '8s', '9s', '10s', '11s'].map((fmt) => (
               <button
                 key={fmt}
                 type="button"
                 onClick={() => setFormData({ ...formData, format: fmt })}
-                className={`py-2 rounded-lg font-semibold transition-colors ${
+                className={`py-2.5 rounded-control text-sm font-bold transition-colors ${
                   formData.format === fmt
-                    ? 'bg-cyan-400 text-black'
-                    : 'bg-zinc-900 text-gray-400 border border-zinc-800 hover:border-cyan-400'
+                    ? 'bg-phosphor text-black'
+                    : 'bg-surface border border-white/6 text-secondary hover:border-white/20'
                 }`}
               >
                 {fmt}
@@ -150,34 +106,24 @@ export default function CreateGamePage() {
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">Subs (£)</label>
-          <input
-            type="number"
-            step="0.01"
-            placeholder="e.g., 5"
-            value={formData.subs}
-            onChange={(e) => setFormData({ ...formData, subs: e.target.value })}
-            className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-          />
+          <label className="block text-secondary text-xs font-bold uppercase tracking-widest mb-2">Subs (£)</label>
+          <input type="number" step="0.01" placeholder="e.g. 5" value={formData.subs}
+            onChange={(e) => setFormData({ ...formData, subs: e.target.value })} className={inputCls} />
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-2">Notes</label>
-          <textarea
-            placeholder="Any additional info..."
-            rows={4}
-            value={formData.notes}
+          <label className="block text-secondary text-xs font-bold uppercase tracking-widest mb-2">Notes</label>
+          <textarea placeholder="Any additional info…" rows={3} value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-          />
+            className={`${inputCls} resize-none`} />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-cyan-400 text-black font-bold py-4 rounded-lg hover:bg-cyan-500 transition-colors disabled:opacity-50"
+          className="w-full bg-phosphor text-black font-bold py-3.5 rounded-control hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {loading ? 'Creating...' : 'Create Game'}
+          {loading ? 'Creating…' : 'Create game'}
         </button>
       </form>
     </div>

@@ -10,43 +10,26 @@ import Image from 'next/image';
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface Game {
-  id: string;
-  organiser_id: string;
-  organiser_name: string;
-  organiser_phone?: string;
-  venue: string;
-  date_time: string;
-  players_needed: number;
-  format: string;
-  subs?: number;
-  notes?: string;
-  status: string;
-  confirmed_count: number;
-  reserve_count: number;
+  id: string; organiser_id: string; organiser_name: string; organiser_phone?: string;
+  venue: string; date_time: string; players_needed: number; format: string;
+  subs?: number; notes?: string; status: string; confirmed_count: number; reserve_count: number;
 }
 
 interface Participant {
-  id: string;
-  game_id: string;
-  user_id: string;
-  user_name: string;
-  user_area?: string;
-  user_phone?: string;
-  user_games_played: number;
-  status: string;
+  id: string; game_id: string; user_id: string; user_name: string;
+  user_area?: string; user_phone?: string; user_games_played: number; status: string;
 }
 
-// Helper function for reliability badge - shows full label
 const getReliabilityBadge = (gamesPlayed: number) => {
-  if (gamesPlayed === 0) return { emoji: '🔵', label: 'New (0 games)', short: 'New' };
-  if (gamesPlayed <= 5) return { emoji: '🟡', label: `Getting Started (${gamesPlayed} games)`, short: `${gamesPlayed} games` };
-  return { emoji: '🟢', label: `Regular (${gamesPlayed} games)`, short: `${gamesPlayed} games` };
+  if (gamesPlayed === 0) return { emoji: '🔵', label: 'New' };
+  if (gamesPlayed <= 5) return { emoji: '🟡', label: `${gamesPlayed} games` };
+  return { emoji: '🟢', label: `${gamesPlayed} games` };
 };
 
 export default function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const gameId = resolvedParams.id;
-  
+
   const [game, setGame] = useState<Game | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,15 +40,11 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const [repeatError, setRepeatError] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
-  
+
   const { user, token } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (gameId) {
-      fetchGameDetails();
-    }
-  }, [gameId]);
+  useEffect(() => { if (gameId) fetchGameDetails(); }, [gameId]);
 
   const fetchGameDetails = async () => {
     try {
@@ -75,9 +54,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
       ]);
       setGame(gameRes.data);
       setParticipants(participantsRes.data);
-    } catch (error) {
-      console.error('Error fetching game:', error);
-      alert('Game not found');
+    } catch {
       router.push('/dashboard/games');
     } finally {
       setLoading(false);
@@ -88,133 +65,95 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
     const date = new Date(isoString);
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} at ${hours}:${minutes}`;
+    const hh = date.getHours().toString().padStart(2, '0');
+    const mm = date.getMinutes().toString().padStart(2, '0');
+    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} at ${hh}:${mm}`;
   };
 
   const formatShortDate = (isoString: string) => {
     const date = new Date(isoString);
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]} @ ${hours}:${minutes}`;
+    const hh = date.getHours().toString().padStart(2, '0');
+    const mm = date.getMinutes().toString().padStart(2, '0');
+    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]} @ ${hh}:${mm}`;
   };
 
-  // Convert format shorthand to full text (e.g., "5s" -> "5-a-side")
   const formatGameType = (format: string) => {
     const match = format.match(/^(\d+)s?$/i);
-    if (match) {
-      return `${match[1]}-a-side`;
-    }
-    return format;
+    return match ? `${match[1]}-a-side` : format;
   };
 
-  // Check user's participation status
   const userParticipation = participants.find(p => p.user_id === user?.id);
   const isOrganiser = game?.organiser_id === user?.id;
-
-  // Group participants by status
   const requestedPlayers = participants.filter(p => p.status === 'REQUESTED');
   const confirmedPlayers = participants.filter(p => p.status === 'CONFIRMED');
-  const reservePlayers = participants.filter(p => p.status === 'RESERVE');
+  const reservePlayers  = participants.filter(p => p.status === 'RESERVE');
 
   const handleRequestSpot = async () => {
-    if (!token) {
-      alert('Please log in first');
-      return;
-    }
-
+    if (!token) { alert('Please log in first'); return; }
     setActionLoading(true);
     try {
-      await axios.post(`${API_URL}/participants?token=${token}`, {
-        game_id: gameId,
-        action: 'REQUESTED'
-      });
+      await axios.post(`${API_URL}/participants?token=${token}`, { game_id: gameId, action: 'REQUESTED' });
       await fetchGameDetails();
     } catch (error: any) {
       alert(error.response?.data?.detail || 'Failed to request spot');
-    } finally {
-      setActionLoading(false);
-    }
+    } finally { setActionLoading(false); }
   };
 
   const handleJoinReserve = async () => {
-    if (!token) {
-      alert('Please log in first');
-      return;
-    }
-
+    if (!token) { alert('Please log in first'); return; }
     setActionLoading(true);
     try {
-      await axios.post(`${API_URL}/participants?token=${token}`, {
-        game_id: gameId,
-        action: 'RESERVE'
-      });
+      await axios.post(`${API_URL}/participants?token=${token}`, { game_id: gameId, action: 'RESERVE' });
       await fetchGameDetails();
     } catch (error: any) {
       alert(error.response?.data?.detail || 'Failed to join reserve');
-    } finally {
-      setActionLoading(false);
-    }
+    } finally { setActionLoading(false); }
   };
 
   const handleApprove = async (player: Participant) => {
     setActionLoading(true);
-    // Open a blank window now, while still in the synchronous click handler,
-    // so the browser doesn't block it as a popup after the awaits below.
     const waWindow = player.user_phone ? window.open('', '_blank') : null;
     try {
       await axios.post(`${API_URL}/participants/${player.id}/approve?token=${token}`);
       await fetchGameDetails();
       if (waWindow && player.user_phone && game) {
         let phone = player.user_phone.replace(/\s+/g, '').replace(/^0/, '44');
-        if (!phone.startsWith('+') && !phone.startsWith('44')) {
-          phone = '44' + phone;
-        }
+        if (!phone.startsWith('+') && !phone.startsWith('44')) phone = '44' + phone;
         const message = `You're confirmed 👍\nGame: ${game.venue}\nTime: ${formatShortDate(game.date_time)}\nSee you there`;
         waWindow.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
       }
     } catch (error: any) {
       waWindow?.close();
       alert(error.response?.data?.detail || 'Failed to approve');
-    } finally {
-      setActionLoading(false);
-    }
+    } finally { setActionLoading(false); }
   };
 
   const handleDecline = async (participantId: string) => {
     if (!confirm('Decline this request?')) return;
-    
     setActionLoading(true);
     try {
       await axios.post(`${API_URL}/participants/${participantId}/decline?token=${token}`);
       await fetchGameDetails();
     } catch (error: any) {
       alert(error.response?.data?.detail || 'Failed to decline');
-    } finally {
-      setActionLoading(false);
-    }
+    } finally { setActionLoading(false); }
   };
 
   const handleRemove = async (participantId: string, playerName: string) => {
     if (!confirm(`Remove ${playerName} from the game?`)) return;
-    
     setActionLoading(true);
     try {
       await axios.delete(`${API_URL}/participants/${participantId}?token=${token}`);
       await fetchGameDetails();
     } catch (error: any) {
       alert(error.response?.data?.detail || 'Failed to remove');
-    } finally {
-      setActionLoading(false);
-    }
+    } finally { setActionLoading(false); }
   };
 
   const handleWithdraw = async () => {
-    if (!confirm("This will notify the organiser and free up your spot. Continue?")) return;
-    
+    if (!confirm('This will notify the organiser and free up your spot. Continue?')) return;
     setActionLoading(true);
     try {
       await axios.post(`${API_URL}/participants/withdraw?game_id=${gameId}&token=${token}`);
@@ -222,33 +161,20 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
       await fetchGameDetails();
     } catch (error: any) {
       alert(error.response?.data?.detail || 'Failed to withdraw');
-    } finally {
-      setActionLoading(false);
-    }
+    } finally { setActionLoading(false); }
   };
 
   const handleMessageOrganiser = () => {
     if (!game) return;
-    
     const message = `Hey, I can't make ${game.venue} on ${formatShortDate(game.date_time)}. Please fill my spot 🙏`;
-    const encodedMessage = encodeURIComponent(message);
-    
     if (game.organiser_phone) {
-      // Format phone number (remove spaces, ensure it starts with country code)
       let phone = game.organiser_phone.replace(/\s+/g, '').replace(/^0/, '44');
-      if (!phone.startsWith('+') && !phone.startsWith('44')) {
-        phone = '44' + phone;
-      }
-      // Open WhatsApp directly to organiser
-      window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+      if (!phone.startsWith('+') && !phone.startsWith('44')) phone = '44' + phone;
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     } else {
-      // Fallback: copy message to clipboard
-      navigator.clipboard.writeText(message).then(() => {
-        alert('Message copied! Paste it in WhatsApp to the organiser.\n\n(Organiser has no phone number on file)');
-      }).catch(() => {
-        // Double fallback: show alert with message
-        alert(`Copy this message to send to organiser:\n\n${message}`);
-      });
+      navigator.clipboard.writeText(message)
+        .then(() => alert('Message copied! Paste it in WhatsApp to the organiser.'))
+        .catch(() => alert(`Copy this message to the organiser:\n\n${message}`));
     }
   };
 
@@ -261,9 +187,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
       router.push('/dashboard/games');
     } catch (error: any) {
       setDeleteError(error.response?.data?.detail || 'Failed to delete game');
-    } finally {
-      setDeleteLoading(false);
-    }
+    } finally { setDeleteLoading(false); }
   };
 
   const handleRepeat = async () => {
@@ -275,9 +199,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
       router.push(`/dashboard/games/${res.data.id}`);
     } catch (error: any) {
       setRepeatError(error.response?.data?.detail || 'Failed to repost game');
-    } finally {
-      setRepeatLoading(false);
-    }
+    } finally { setRepeatLoading(false); }
   };
 
   const handleShareJoinLink = () => {
@@ -295,283 +217,214 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
 
   const handleShareGame = () => {
     if (!game) return;
-    
-    const spotsRemaining = game.players_needed;
-    const gameUrl = window.location.href;
-    
-    let message = `⚽ DROPOUT RESCUE\n\n`;
-    message += `${game.venue}\n`;
-    message += `${formatShortDate(game.date_time)}\n`;
-    message += `${formatGameType(game.format)}\n`;
-    message += `${spotsRemaining} spot${spotsRemaining !== 1 ? 's' : ''} left\n`;
-    
-    if (game.subs) {
-      message += `Subs: £${game.subs}\n`;
-    }
-    
-    if (game.notes) {
-      message += `Notes: ${game.notes}\n`;
-    }
-    
-    message += `\nJoin: ${gameUrl}`;
+    let message = `⚽ DROPOUT RESCUE\n\n${game.venue}\n${formatShortDate(game.date_time)}\n${formatGameType(game.format)}\n${game.players_needed} spot${game.players_needed !== 1 ? 's' : ''} left\n`;
+    if (game.subs) message += `Subs: £${game.subs}\n`;
+    if (game.notes) message += `Notes: ${game.notes}\n`;
+    message += `\nJoin: ${window.location.href}`;
 
-    navigator.clipboard.writeText(message).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = message;
-      document.body.appendChild(textArea);
-      textArea.select();
+    const copy = () => {
+      const ta = document.createElement('textarea');
+      ta.value = message;
+      document.body.appendChild(ta);
+      ta.select();
       document.execCommand('copy');
-      document.body.removeChild(textArea);
+      document.body.removeChild(ta);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    };
+
+    navigator.clipboard.writeText(message)
+      .then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); })
+      .catch(copy);
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400"></div>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-phosphor"></div></div>;
   }
 
   if (!game) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-gray-400 mb-4">Game not found</p>
-        <Link href="/dashboard/games" className="text-cyan-400">Back to games</Link>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-3">
+        <p className="text-secondary">Game not found</p>
+        <Link href="/dashboard/games" className="text-phosphor text-sm">Back to games</Link>
       </div>
     );
   }
 
   return (
     <div className="max-w-2xl mx-auto p-4 pb-32">
-      {/* Back Button with Logo */}
-      <div className="flex items-center justify-between mb-6">
-        <Link
-          href="/dashboard/games"
-          className="inline-flex items-center text-gray-400 hover:text-white transition-colors"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      {/* Back */}
+      <div className="flex items-center justify-between mb-5">
+        <Link href="/dashboard/games" className="inline-flex items-center gap-1.5 text-secondary hover:text-white transition-colors text-sm">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Games
+          Back
         </Link>
-        <Image src="/logo.png" alt="Dropout Rescue" width={24} height={24} className="rounded opacity-60" />
+        <Image src="/logo.png" alt="Dropout Rescue" width={22} height={22} className="rounded-control opacity-50" />
       </div>
 
-      {/* Game Header */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 mb-6">
-        <div className="flex justify-between items-start mb-4">
-          <h1 className="text-2xl font-bold text-white">{game.venue}</h1>
-          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-            game.status === 'FULL' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+      {/* Game header */}
+      <div className="bg-surface border border-white/6 rounded-card p-5 mb-5">
+        <div className="flex justify-between items-start mb-3">
+          <h1 className="text-xl font-extrabold tracking-tight text-white pr-3">{game.venue}</h1>
+          <span className={`microlabel px-2 py-1 rounded-control shrink-0 ${
+            game.status === 'FULL' ? 'bg-red-500/15 text-red-400' : 'bg-green-500/15 text-green-400'
           }`}>
             {game.status}
           </span>
         </div>
 
-        <p className="text-cyan-400 font-medium mb-4">{formatDateTime(game.date_time)}</p>
+        <p className="text-phosphor text-sm font-medium mb-4">{formatDateTime(game.date_time)}</p>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-zinc-800 rounded-lg p-3">
-            <p className="text-gray-400 text-sm">Format</p>
-            <p className="text-white font-bold">{formatGameType(game.format)}</p>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="bg-bg border border-white/6 rounded-control p-3">
+            <p className="microlabel text-tertiary mb-1">Format</p>
+            <p className="text-white font-bold text-sm">{formatGameType(game.format)}</p>
           </div>
-          <div className="bg-zinc-800 rounded-lg p-3">
-            <p className="text-gray-400 text-sm">Spots Left</p>
-            <p className={`font-bold ${game.players_needed > 0 ? 'text-green-400' : 'text-red-400'}`}>
+          <div className="bg-bg border border-white/6 rounded-control p-3">
+            <p className="microlabel text-tertiary mb-1">Spots left</p>
+            <p className={`font-bold tabular-nums ${game.players_needed > 0 ? 'text-phosphor' : 'text-red-400'}`}>
               {game.players_needed}
             </p>
           </div>
         </div>
 
         {game.subs && (
-          <div className="bg-zinc-800 rounded-lg p-3 mb-4">
-            <p className="text-gray-400 text-sm">Subs</p>
-            <p className="text-white font-bold">£{game.subs}</p>
+          <div className="bg-bg border border-white/6 rounded-control p-3 mb-2">
+            <p className="microlabel text-tertiary mb-1">Subs</p>
+            <p className="text-white font-bold tabular-nums">£{game.subs}</p>
           </div>
         )}
 
         {game.notes && (
-          <div className="bg-zinc-800 rounded-lg p-3 mb-4">
-            <p className="text-gray-400 text-sm">Notes</p>
-            <p className="text-white">{game.notes}</p>
+          <div className="bg-bg border border-white/6 rounded-control p-3 mb-3">
+            <p className="microlabel text-tertiary mb-1">Notes</p>
+            <p className="text-white text-sm">{game.notes}</p>
           </div>
         )}
-{/* Share Button */}
-<button
-  onClick={handleShareGame}
-  className={`w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 mb-6 transition-all ${
-    copied 
-      ? 'bg-green-500 text-white' 
-      : 'bg-zinc-800 text-white border border-zinc-700 hover:border-cyan-400'
-  }`}
->
-  {copied ? (
-    <>
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-      </svg>
-      Copied to Clipboard!
-    </>
-  ) : (
-    <>
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-      </svg>
-      Share Game
-    </>
-  )}
-</button>
 
-<div className="border-t border-zinc-700 pt-4">
-  <p className="text-gray-400 text-sm">Organised by</p>
-  <p className="text-white font-medium">{game.organiser_name}</p>
-</div>
-
-{/* Player Action Section */}
-{!isOrganiser && (
-  <div className="mb-6">
-    {userParticipation ? (
-      <div className="space-y-3">
-        {/* Status Badge */}
-        <div className={`text-center py-2 rounded-lg ${
-          userParticipation.status === 'CONFIRMED' 
-            ? 'bg-green-500/10 border-2 border-green-500' 
-            : userParticipation.status === 'REQUESTED'
-            ? 'bg-yellow-500/10 border-2 border-yellow-500'
-            : 'bg-cyan-400/10 border-2 border-cyan-400'
-        }`}>
-          <p className={`font-bold ${
-            userParticipation.status === 'CONFIRMED' 
-              ? 'text-green-500' 
-              : userParticipation.status === 'REQUESTED'
-              ? 'text-yellow-500'
-              : 'text-cyan-400'
-          }`}>
-            {userParticipation.status === 'CONFIRMED' && "You're confirmed for this game"}
-            {userParticipation.status === 'REQUESTED' && 'Request Pending'}
-            {userParticipation.status === 'RESERVE' && "You're on Reserve"}
-          </p>
-        </div>
-
-        {/* Leave Game + Message Organiser (for Confirmed or Reserve) */}
-        {(userParticipation.status === 'CONFIRMED' || userParticipation.status === 'RESERVE') && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleWithdraw}
-                    disabled={actionLoading}
-                    className="flex-1 bg-red-500/10 border border-red-500 text-red-500 font-semibold py-3 rounded-lg hover:bg-red-500/20 transition-colors disabled:opacity-50 text-sm"
-                  >
-                    Leave Game
-                  </button>
-                  <button
-                    onClick={handleMessageOrganiser}
-                    className="flex-1 bg-green-500/10 border border-green-500 text-green-500 font-semibold py-3 rounded-lg hover:bg-green-500/20 transition-colors text-sm flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                    </svg>
-                    Message Organiser
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : game?.status === 'OPEN' ? (
-            <button
-              onClick={handleRequestSpot}
-              disabled={actionLoading}
-              className="w-full bg-cyan-400 text-black font-bold py-4 rounded-lg hover:bg-cyan-300 transition-colors disabled:opacity-50"
-            >
-              {actionLoading ? 'Requesting...' : 'Request Spot'}
-            </button>
+        {/* Share game button */}
+        <button
+          onClick={handleShareGame}
+          className={`w-full py-2.5 rounded-control font-bold flex items-center justify-center gap-2 mb-4 transition-all text-sm ${
+            copied ? 'bg-green-500/15 border border-green-500/30 text-green-400' : 'bg-bg border border-white/10 text-secondary hover:border-white/20 hover:text-white'
+          }`}
+        >
+          {copied ? (
+            <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Copied!</>
           ) : (
-            <button
-              onClick={handleJoinReserve}
-              disabled={actionLoading}
-              className="w-full bg-zinc-800 text-cyan-400 border-2 border-cyan-400 font-bold py-4 rounded-lg hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
-            >
-              {actionLoading ? 'Joining...' : 'Join Reserve List'}
-            </button>
+            <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>Share game</>
           )}
-        </div>
-      )}
+        </button>
 
-      {/* Organiser Badge */}
-      {isOrganiser && (
-        <div className="bg-cyan-400/10 border-2 border-cyan-400 rounded-lg p-4 mb-4 text-center">
-          <p className="text-cyan-400 font-bold">You're the Organiser</p>
-          <p className="text-gray-400 text-sm mt-1">Manage player requests below</p>
-          <button
-            onClick={handleShareJoinLink}
-            className={`mt-3 w-full py-2 rounded-lg text-sm font-semibold transition-all ${
-              linkCopied
-                ? 'bg-green-500 text-white'
-                : 'bg-cyan-400/20 text-cyan-400 hover:bg-cyan-400/30'
-            }`}
-          >
-            {linkCopied ? 'Link Copied!' : 'Copy Join Link'}
-          </button>
+        <div className="border-t border-white/6 pt-3">
+          <p className="text-tertiary text-xs">Organised by</p>
+          <p className="text-white font-medium text-sm mt-0.5">{game.organiser_name}</p>
         </div>
-      )}
 
-      {/* Repeat Game — only shown for past games */}
-      {isOrganiser && new Date(game.date_time) < new Date() && (
-        <div className="mb-6">
-          {repeatError && <p className="text-red-400 text-sm mb-2">{repeatError}</p>}
-          <button
-            onClick={handleRepeat}
-            disabled={repeatLoading}
-            className="w-full bg-zinc-800 border border-zinc-700 text-white font-semibold py-3 rounded-lg hover:border-cyan-400 transition-colors disabled:opacity-50"
-          >
-            {repeatLoading ? 'Creating...' : '↻ Post again next week'}
-          </button>
-        </div>
-      )}
+        {/* Player action */}
+        {!isOrganiser && (
+          <div className="mt-4">
+            {userParticipation ? (
+              <div className="space-y-2">
+                <div className={`text-center py-2.5 rounded-control border ${
+                  userParticipation.status === 'CONFIRMED'
+                    ? 'bg-green-500/10 border-green-500/40 text-green-400'
+                    : userParticipation.status === 'REQUESTED'
+                    ? 'bg-warn/10 border-warn/30 text-warn'
+                    : 'bg-phosphor/10 border-phosphor/30 text-phosphor'
+                }`}>
+                  <p className="font-bold text-sm">
+                    {userParticipation.status === 'CONFIRMED' && "You're confirmed for this game"}
+                    {userParticipation.status === 'REQUESTED' && 'Request pending'}
+                    {userParticipation.status === 'RESERVE' && "You're on reserve"}
+                  </p>
+                </div>
+
+                {(userParticipation.status === 'CONFIRMED' || userParticipation.status === 'RESERVE') && (
+                  <div className="flex gap-2">
+                    <button onClick={handleWithdraw} disabled={actionLoading}
+                      className="flex-1 bg-red-500/10 border border-red-500/30 text-red-400 font-bold py-2.5 rounded-control hover:bg-red-500/15 transition-colors disabled:opacity-50 text-sm">
+                      Leave game
+                    </button>
+                    <button onClick={handleMessageOrganiser}
+                      className="flex-1 bg-green-500/10 border border-green-500/30 text-green-400 font-bold py-2.5 rounded-control hover:bg-green-500/15 transition-colors text-sm flex items-center justify-center gap-1.5">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                      </svg>
+                      Message organiser
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : game?.status === 'OPEN' ? (
+              <button onClick={handleRequestSpot} disabled={actionLoading}
+                className="w-full bg-phosphor text-black font-bold py-3.5 rounded-control hover:opacity-90 transition-opacity disabled:opacity-50">
+                {actionLoading ? 'Requesting…' : 'Request spot'}
+              </button>
+            ) : (
+              <button onClick={handleJoinReserve} disabled={actionLoading}
+                className="w-full bg-phosphor/10 border-2 border-phosphor text-phosphor font-bold py-3.5 rounded-control hover:bg-phosphor/15 transition-colors disabled:opacity-50">
+                {actionLoading ? 'Joining…' : 'Join reserve list'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Organiser badge */}
+        {isOrganiser && (
+          <div className="mt-4 bg-bg border border-white/10 rounded-control p-4">
+            <p className="text-phosphor font-bold text-sm">You're the organiser</p>
+            <p className="text-secondary text-xs mt-0.5 mb-3">Manage player requests below</p>
+            <button onClick={handleShareJoinLink}
+              className={`w-full py-2 rounded-control text-sm font-bold transition-all ${
+                linkCopied ? 'bg-green-500/15 border border-green-500/30 text-green-400' : 'bg-phosphor/10 border border-phosphor/20 text-phosphor hover:bg-phosphor/15'
+              }`}>
+              {linkCopied ? 'Link copied!' : 'Copy join link'}
+            </button>
+          </div>
+        )}
+
+        {/* Repeat — past games only */}
+        {isOrganiser && new Date(game.date_time) < new Date() && (
+          <div className="mt-3">
+            {repeatError && <p className="text-red-400 text-xs mb-2">{repeatError}</p>}
+            <button onClick={handleRepeat} disabled={repeatLoading}
+              className="w-full bg-bg border border-white/10 text-secondary font-medium py-2.5 rounded-control hover:border-white/20 hover:text-white transition-colors disabled:opacity-50 text-sm">
+              {repeatLoading ? 'Creating…' : '↻ Post again next week'}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Pending Requests (Organiser Only) */}
+      {/* Pending Requests */}
       {isOrganiser && requestedPlayers.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-            <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
-            Pending Requests ({requestedPlayers.length})
-          </h2>
+        <div className="mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-1.5 h-1.5 bg-warn rounded-full animate-pulse"></span>
+            <p className="microlabel text-warn">Pending requests ({requestedPlayers.length})</p>
+          </div>
           <div className="space-y-2">
-            {requestedPlayers.map((player) => {
+            {requestedPlayers.map(player => {
               const badge = getReliabilityBadge(player.user_games_played || 0);
               return (
-                <div key={player.id} className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
+                <div key={player.id} className="bg-warn/8 border border-warn/20 rounded-card p-4">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-white font-medium">{player.user_name}</p>
-                        <span className="text-xs text-gray-400">{badge.emoji} {badge.label}</span>
-                      </div>
-                      {player.user_area && <p className="text-gray-400 text-sm">{player.user_area}</p>}
+                      <p className="text-white font-bold text-sm">{player.user_name}</p>
+                      <p className="text-tertiary text-xs mt-0.5">{badge.emoji} {badge.label}{player.user_area ? ` · ${player.user_area}` : ''}</p>
                     </div>
-                   <div className="flex gap-2">
-  <button
-    onClick={() => handleApprove(player)}
-    disabled={actionLoading}
-    className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold"
-  >
-    Approve & Message
-  </button>
-
-  <button
-    onClick={() => handleDecline(player.id)}
-    disabled={actionLoading}
-    className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold"
-  >
-    Decline
-  </button>
-</div>
+                    <div className="flex gap-1.5 shrink-0">
+                      <button onClick={() => handleApprove(player)} disabled={actionLoading}
+                        className="bg-green-500/15 border border-green-500/30 text-green-400 px-3 py-1.5 rounded-control text-xs font-bold hover:bg-green-500/20 transition-colors disabled:opacity-50">
+                        Approve & Message
+                      </button>
+                      <button onClick={() => handleDecline(player.id)} disabled={actionLoading}
+                        className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-1.5 rounded-control text-xs font-bold hover:bg-red-500/15 transition-colors disabled:opacity-50">
+                        Decline
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -580,87 +433,68 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       )}
 
-      {/* Confirmed Players */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-          Confirmed ({confirmedPlayers.length})
-        </h2>
+      {/* Confirmed */}
+      <div className="mb-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+          <p className="microlabel text-secondary">Confirmed ({confirmedPlayers.length})</p>
+        </div>
         {confirmedPlayers.length === 0 ? (
-          <p className="text-gray-500 text-sm py-4 text-center">No players confirmed yet</p>
+          <p className="text-tertiary text-sm text-center py-4">No players confirmed yet</p>
         ) : (
-          <div className="space-y-2">
-            {confirmedPlayers.map((player) => {
+          <div className="space-y-1.5">
+            {confirmedPlayers.map(player => {
               const badge = getReliabilityBadge(player.user_games_played || 0);
               return (
-                <div key={player.id} className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-white font-medium">{player.user_name}</p>
-                        <span className="text-xs text-gray-400">{badge.emoji} {badge.label}</span>
-                      </div>
-                      {player.user_area && <p className="text-gray-400 text-sm">{player.user_area}</p>}
-                    </div>
-                    {isOrganiser && (
-                      <button
-                        onClick={() => handleRemove(player.id, player.user_name)}
-                        disabled={actionLoading}
-                        className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors disabled:opacity-50"
-                      >
+                <div key={player.id} className="bg-surface border border-white/6 rounded-card p-3.5 flex items-center justify-between">
+                  <div>
+                    <p className="text-white font-medium text-sm">{player.user_name}</p>
+                    <p className="text-tertiary text-xs mt-0.5">{badge.emoji} {badge.label}{player.user_area ? ` · ${player.user_area}` : ''}</p>
+                  </div>
+                  {isOrganiser && (
+                    <button onClick={() => handleRemove(player.id, player.user_name)} disabled={actionLoading}
+                      className="text-red-400 hover:text-red-300 text-xs font-medium transition-colors disabled:opacity-50">
+                      Remove
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Reserve */}
+      <div className="mb-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-1.5 h-1.5 bg-phosphor rounded-full"></span>
+          <p className="microlabel text-secondary">Reserve ({reservePlayers.length})</p>
+        </div>
+        {reservePlayers.length === 0 ? (
+          <p className="text-tertiary text-sm text-center py-4">No reserve players</p>
+        ) : (
+          <div className="space-y-1.5">
+            {reservePlayers.map(player => {
+              const badge = getReliabilityBadge(player.user_games_played || 0);
+              return (
+                <div key={player.id} className="bg-surface border border-white/6 rounded-card p-3.5 flex items-center justify-between">
+                  <div>
+                    <p className="text-white font-medium text-sm">{player.user_name}</p>
+                    <p className="text-tertiary text-xs mt-0.5">{badge.emoji} {badge.label}{player.user_area ? ` · ${player.user_area}` : ''}</p>
+                  </div>
+                  {isOrganiser && (
+                    <div className="flex gap-3">
+                      <button onClick={() => handleApprove(player)} disabled={actionLoading || game.players_needed === 0}
+                        className="text-green-400 hover:text-green-300 text-xs font-medium transition-colors disabled:opacity-50"
+                        title={game.players_needed === 0 ? 'Game is full' : 'Move to confirmed'}>
+                        Promote
+                      </button>
+                      <button onClick={() => handleRemove(player.id, player.user_name)} disabled={actionLoading}
+                        className="text-red-400 hover:text-red-300 text-xs font-medium transition-colors disabled:opacity-50">
                         Remove
                       </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Reserve List */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-          <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
-          Reserve ({reservePlayers.length})
-        </h2>
-        {reservePlayers.length === 0 ? (
-          <p className="text-gray-500 text-sm py-4 text-center">No reserve players</p>
-        ) : (
-          <div className="space-y-2">
-            {reservePlayers.map((player) => {
-              const badge = getReliabilityBadge(player.user_games_played || 0);
-              return (
-                <div key={player.id} className="bg-cyan-400/10 border border-cyan-400/30 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-white font-medium">{player.user_name}</p>
-                        <span className="text-xs text-gray-400">{badge.emoji} {badge.label}</span>
-                      </div>
-                      {player.user_area && <p className="text-gray-400 text-sm">{player.user_area}</p>}
                     </div>
-                    {isOrganiser && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleApprove(player)}
-                          disabled={actionLoading || game.players_needed === 0}
-                          className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors disabled:opacity-50"
-                          title={game.players_needed === 0 ? 'Game is full' : 'Move to confirmed'}
-                        >
-                          Promote
-                        </button>
-                        <button
-                          onClick={() => handleRemove(player.id, player.user_name)}
-                          disabled={actionLoading}
-                          className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors disabled:opacity-50"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               );
             })}
@@ -668,16 +502,13 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         )}
       </div>
 
-      {/* Delete Game — organiser only */}
+      {/* Delete */}
       {isOrganiser && (
-        <div className="mt-4">
-          {deleteError && <p className="text-red-400 text-sm mb-2">{deleteError}</p>}
-          <button
-            onClick={handleDelete}
-            disabled={deleteLoading}
-            className="w-full py-3 rounded-lg border border-red-500/40 text-red-500 font-semibold hover:bg-red-500/10 transition-colors disabled:opacity-50"
-          >
-            {deleteLoading ? 'Deleting...' : 'Delete Game'}
+        <div className="mt-2">
+          {deleteError && <p className="text-red-400 text-xs mb-2">{deleteError}</p>}
+          <button onClick={handleDelete} disabled={deleteLoading}
+            className="w-full py-2.5 rounded-control border border-red-500/20 text-red-500/70 text-sm font-medium hover:border-red-500/40 hover:text-red-400 transition-colors disabled:opacity-50">
+            {deleteLoading ? 'Deleting…' : 'Delete game'}
           </button>
         </div>
       )}

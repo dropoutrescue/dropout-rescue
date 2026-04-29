@@ -22,9 +22,7 @@ export default function NotificationsPage() {
   const { token } = useAuth();
 
   useEffect(() => {
-    if (token) {
-      fetchNotifications();
-    }
+    if (token) fetchNotifications();
   }, [token]);
 
   const fetchNotifications = async () => {
@@ -37,127 +35,105 @@ export default function NotificationsPage() {
       setLoading(false);
     }
   };
+
   const handleClearAll = async () => {
     try {
-      const res = await axios.delete(`${API_URL}/notifications?token=${token}`);
-      console.log('clear success', res.data);
+      await axios.delete(`${API_URL}/notifications?token=${token}`);
       setNotifications([]);
-      alert('clear worked');
     } catch (error: any) {
       console.error('Error clearing notifications:', error);
-      alert(
-        `clear failed: ${error?.response?.status || 'no-status'} - ${error?.response?.data?.detail || error?.message || 'unknown'}`
-      );
     }
-};
-    async function markAsRead(id: string) {
-      try {
-        await axios.post(`${API_URL}/notifications/${id}/read?token=${token}`);
-        setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n
-        ));
-      } catch (error) {
-        console.error('Error marking as read:', error);
-      }
+  };
+
+  async function markAsRead(id: string) {
+    try {
+      await axios.post(`${API_URL}/notifications/${id}/read?token=${token}`);
+      setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch {}
+  }
+
+  const formatTimeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
+  };
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'NEW_REQUEST':   return '🙋';
+      case 'NEW_RESERVE':   return '📋';
+      case 'PLAYER_WITHDREW': return '⚠️';
+      case 'PROMOTED':      return '🎉';
+      default:              return '📢';
     }
+  };
 
-    const formatTimeAgo = (dateStr: string) => {
-      const date = new Date(dateStr);
-      const now = new Date();
-      const diff = now.getTime() - date.getTime();
-
-      const minutes = Math.floor(diff / 60000);
-      if (minutes < 60) return `${minutes}m ago`;
-
-      const hours = Math.floor(minutes / 60);
-      if (hours < 24) return `${hours}h ago`;
-
-      const days = Math.floor(hours / 24);
-      return `${days}d ago`;
-    };
-
-    const getNotificationIcon = (type: string) => {
-      switch (type) {
-        case 'NEW_REQUEST':
-          return '🙋';
-        case 'NEW_RESERVE':
-          return '📋';
-        case 'PLAYER_WITHDREW':
-          return '⚠️';
-        case 'PROMOTED':
-          return '🎉';
-        default:
-          return '📢';
-      }
-    };
-
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400"></div>
-        </div>
-      );
-    }
-
-
-
+  if (loading) {
     return (
-      <div className="max-w-2xl mx-auto p-4">
-        <div className="flex items-center gap-3 mb-6">
-          <Link href="/dashboard/games" className="text-gray-400 hover:text-white">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <h1 className="text-2xl font-bold text-white">Notifications</h1>
-        </div>
-        <button
-          onClick={handleClearAll}
-          className="text-sm text-red-400 mb-4"
-        >
-          Clear all
-        </button>
-        {notifications.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-4">🔔</p>
-            <p className="text-gray-400">No notifications yet</p>
-            <p className="text-gray-600 text-sm mt-2">You'll be notified when players request spots or can't make it</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                onClick={() => !notification.read && markAsRead(notification.id)}
-                className={`p-4 rounded-lg border transition-colors cursor-pointer ${notification.read
-                    ? 'bg-zinc-900 border-zinc-800'
-                    : 'bg-cyan-400/5 border-cyan-400/30'
-                  }`}
-              >
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">{getNotificationIcon(notification.type)}</span>
-                  <div className="flex-1">
-                    <p className={`${notification.read ? 'text-gray-400' : 'text-white font-medium'}`}>
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(notification.created_at)}</p>
-                  </div>
-                  {!notification.read && (
-                    <span className="w-2 h-2 bg-cyan-400 rounded-full flex-shrink-0 mt-2"></span>
-                  )}
-                </div>
-                {notification.game_id && (
-                  <Link
-                    href={`/dashboard/games/${notification.game_id}`}
-                    className="block mt-3 text-cyan-400 text-sm hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    View Game →
-                  </Link>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-phosphor"></div>
       </div>
     );
   }
+
+  return (
+    <div className="max-w-2xl mx-auto p-4">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard/games" className="text-secondary hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <h1 className="text-2xl font-extrabold tracking-tight text-white">Notifications</h1>
+        </div>
+        {notifications.length > 0 && (
+          <button onClick={handleClearAll} className="text-tertiary hover:text-secondary text-sm transition-colors">
+            Clear all
+          </button>
+        )}
+      </div>
+
+      {notifications.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-4xl mb-4">🔔</p>
+          <p className="text-secondary">No notifications yet</p>
+          <p className="text-tertiary text-sm mt-1">You'll be notified when players request spots or can't make it</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {notifications.map(n => (
+            <div
+              key={n.id}
+              onClick={() => !n.read && markAsRead(n.id)}
+              className={`p-4 rounded-card border transition-colors cursor-pointer ${
+                n.read ? 'bg-surface border-white/6' : 'bg-phosphor/5 border-phosphor/20'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-xl">{getIcon(n.type)}</span>
+                <div className="flex-1">
+                  <p className={`text-sm ${n.read ? 'text-secondary' : 'text-white font-medium'}`}>{n.message}</p>
+                  <p className="text-xs text-tertiary mt-1">{formatTimeAgo(n.created_at)}</p>
+                </div>
+                {!n.read && <span className="w-1.5 h-1.5 bg-phosphor rounded-full flex-shrink-0 mt-1.5"></span>}
+              </div>
+              {n.game_id && (
+                <Link
+                  href={`/dashboard/games/${n.game_id}`}
+                  className="block mt-2 text-phosphor text-sm hover:opacity-80 transition-opacity"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  View game →
+                </Link>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
