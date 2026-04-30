@@ -29,48 +29,37 @@ export default function LoginPage() {
     }
   };
 
+  const inputCls = 'w-full px-[14px] py-3 text-[15px] bg-[var(--surface)] border border-[var(--border-2)] rounded-control text-white placeholder:text-[var(--text-3)] focus:outline-none focus:border-[var(--primary)] transition-colors';
+
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Image src="/logo.png" alt="Dropout Rescue" width={200} height={200} className="mx-auto mb-4" />
-          <p className="text-secondary text-sm">Built for local football. Powered by the community.</p>
+          <p className="text-[var(--text-2)] text-sm">Built for local football. Powered by the community.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/40 text-red-400 px-4 py-3 rounded-control text-sm">
+            <div className="bg-[var(--danger)]/10 border border-[var(--danger)]/40 text-[var(--danger)] px-4 py-3 rounded-control text-sm">
               {error}
             </div>
           )}
 
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 bg-surface border border-white/6 rounded-control text-white placeholder-tertiary focus:outline-none focus:border-phosphor transition-colors"
-          />
+          <input type="email" placeholder="Email" value={email}
+            onChange={(e) => setEmail(e.target.value)} className={inputCls} />
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 bg-surface border border-white/6 rounded-control text-white placeholder-tertiary focus:outline-none focus:border-phosphor transition-colors"
-          />
+          <input type="password" placeholder="Password" value={password}
+            onChange={(e) => setPassword(e.target.value)} className={inputCls} />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-phosphor text-black font-bold py-3 rounded-control hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
+          <button type="submit" disabled={loading}
+            className="w-full bg-[var(--primary)] text-black font-extrabold uppercase tracking-[0.1em] py-[11px] rounded-control hover:opacity-90 transition-opacity disabled:opacity-50">
             {loading ? 'Logging in…' : 'Log in'}
           </button>
 
-          <p className="text-center text-secondary text-sm pt-1">
+          <p className="text-center text-[var(--text-2)] text-sm pt-1">
             No account?{' '}
-            <Link href="/auth/signup" className="text-phosphor font-bold hover:opacity-80">
+            <Link href="/auth/signup" className="text-[var(--primary)] font-bold hover:opacity-80">
               Sign up
             </Link>
           </p>

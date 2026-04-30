@@ -75,11 +75,11 @@ export default function MyGamesPage() {
     return match ? `${match[1]}-a-side` : format;
   };
 
-  const statusBadge = (status: string) => {
+  const statusColor = (status: string): string => {
     switch (status) {
-      case 'CONFIRMED': return 'bg-green-500/15 text-green-400';
-      case 'RESERVE':   return 'bg-phosphor/10 text-phosphor';
-      default:          return 'bg-warn/15 text-warn';
+      case 'CONFIRMED': return 'var(--primary)';
+      case 'RESERVE':   return 'var(--warn)';
+      default:          return 'var(--warn)';
     }
   };
   const statusLabel = (status: string) => {
@@ -92,18 +92,24 @@ export default function MyGamesPage() {
 
   const tabCls = (active: boolean) =>
     `px-5 py-3 font-bold text-sm transition-colors border-b-2 ${
-      active ? 'text-phosphor border-phosphor' : 'text-tertiary border-transparent hover:text-secondary'
+      active
+        ? 'text-[var(--primary)] border-[var(--primary)]'
+        : 'text-[var(--text-3)] border-transparent hover:text-[var(--text-2)]'
     }`;
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-phosphor"></div></div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--primary)]"></div>
+      </div>
+    );
   }
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-extrabold tracking-tight text-white mb-6">My games</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight text-white mb-6" style={{ letterSpacing: '-0.025em' }}>My games</h1>
 
-      <div className="flex gap-1 mb-6 border-b border-white/6">
+      <div className="flex gap-1 mb-6 border-b border-[var(--border)]">
         <button onClick={() => setTab('created')} className={tabCls(tab === 'created')}>
           Created ({createdGames.length})
         </button>
@@ -116,8 +122,8 @@ export default function MyGamesPage() {
         <>
           {createdGames.length === 0 && pastCreatedGames.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-secondary">No games created yet</p>
-              <p className="text-tertiary text-sm mt-1">Tap Create to post your first game</p>
+              <p className="text-[var(--text-2)]">No games created yet</p>
+              <p className="text-[var(--text-3)] text-sm mt-1">Tap Create to post your first game</p>
             </div>
           ) : (
             <>
@@ -125,13 +131,15 @@ export default function MyGamesPage() {
                 <div className="space-y-2 mb-8">
                   {createdGames.map(game => (
                     <Link key={game.id} href={`/dashboard/games/${game.id}`}
-                      className="block bg-surface border border-white/6 rounded-card p-4 hover:border-white/20 transition-colors">
+                      className="block bg-[var(--surface)] border border-[var(--border)] rounded-card p-4 hover:border-[var(--border-2)] transition-colors">
                       <div className="flex justify-between items-start mb-1">
                         <h3 className="text-white font-bold">{game.venue}</h3>
-                        <span className="microlabel bg-warn/15 text-warn px-2 py-1 rounded-control">Organiser</span>
+                        <span className="microlabel text-[var(--warn)] px-2 py-1 rounded-control" style={{ background: 'rgba(255,181,71,0.15)' }}>
+                          Organiser
+                        </span>
                       </div>
-                      <p className="text-secondary text-sm">{formatDateTime(game.date_time)}</p>
-                      <p className="text-phosphor text-sm mt-1.5">{formatGameType(game.format)} · {game.players_needed} needed</p>
+                      <p className="text-[var(--text-2)] text-sm">{formatDateTime(game.date_time)}</p>
+                      <p className="text-[var(--primary)] text-sm mt-1.5">{formatGameType(game.format)} · {game.players_needed} needed</p>
                     </Link>
                   ))}
                 </div>
@@ -139,18 +147,18 @@ export default function MyGamesPage() {
 
               {pastCreatedGames.length > 0 && (
                 <div>
-                  <p className="microlabel text-tertiary mb-3">Past games</p>
-                  {repeatError && <p className="text-red-400 text-sm mb-3">{repeatError}</p>}
+                  <p className="microlabel text-[var(--text-3)] mb-3">Past games</p>
+                  {repeatError && <p className="text-[var(--danger)] text-sm mb-3">{repeatError}</p>}
                   <div className="space-y-2">
                     {pastCreatedGames.map(game => (
-                      <div key={game.id} className="bg-surface border border-white/6 rounded-card p-4 flex items-center justify-between gap-4">
+                      <div key={game.id} className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-4 flex items-center justify-between gap-4">
                         <Link href={`/dashboard/games/${game.id}`} className="flex-1 min-w-0">
                           <h3 className="text-white font-bold truncate">{game.venue}</h3>
-                          <p className="text-secondary text-sm">{formatDateTime(game.date_time)}</p>
-                          <p className="text-tertiary text-sm mt-0.5">{formatGameType(game.format)}</p>
+                          <p className="text-[var(--text-2)] text-sm">{formatDateTime(game.date_time)}</p>
+                          <p className="text-[var(--text-3)] text-sm mt-0.5">{formatGameType(game.format)}</p>
                         </Link>
                         <button onClick={() => handleRepeat(game.id)} disabled={repeatingId === game.id}
-                          className="shrink-0 bg-phosphor/10 border border-phosphor/30 text-phosphor text-sm font-bold px-3 py-2 rounded-control hover:bg-phosphor/15 transition-colors disabled:opacity-50 whitespace-nowrap">
+                          className="shrink-0 border border-[var(--border-2)] text-[var(--text-2)] text-sm font-semibold px-3 py-2 rounded-control hover:text-white transition-colors disabled:opacity-50 whitespace-nowrap">
                           {repeatingId === game.id ? 'Posting…' : 'Post again'}
                         </button>
                       </div>
@@ -167,23 +175,23 @@ export default function MyGamesPage() {
         <>
           {joinedGames.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-secondary">No games joined yet</p>
-              <p className="text-tertiary text-sm mt-1">Find games and request a spot to play</p>
+              <p className="text-[var(--text-2)]">No games joined yet</p>
+              <p className="text-[var(--text-3)] text-sm mt-1">Find games and request a spot to play</p>
             </div>
           ) : (
             <div className="space-y-2">
               {joinedGames.map(game => (
                 <Link key={game.id} href={`/dashboard/games/${game.id}`}
-                  className="block bg-surface border border-white/6 rounded-card p-4 hover:border-white/20 transition-colors">
+                  className="block bg-[var(--surface)] border border-[var(--border)] rounded-card p-4 hover:border-[var(--border-2)] transition-colors">
                   <div className="flex justify-between items-start mb-1">
                     <h3 className="text-white font-bold">{game.venue}</h3>
-                    <span className={`microlabel px-2 py-1 rounded-control ${statusBadge(game.status)}`}>
+                    <span className="microlabel px-2 py-1 rounded-control" style={{ color: statusColor(game.status) }}>
                       {statusLabel(game.status)}
                     </span>
                   </div>
-                  <p className="text-secondary text-sm">{formatDateTime(game.date_time)}</p>
-                  <p className="text-tertiary text-sm mt-0.5">by {game.organiser_name}</p>
-                  <p className="text-phosphor text-sm mt-1.5">{formatGameType(game.format)}</p>
+                  <p className="text-[var(--text-2)] text-sm">{formatDateTime(game.date_time)}</p>
+                  <p className="text-[var(--text-3)] text-sm mt-0.5">by {game.organiser_name}</p>
+                  <p className="text-[var(--primary)] text-sm mt-1.5">{formatGameType(game.format)}</p>
                 </Link>
               ))}
             </div>

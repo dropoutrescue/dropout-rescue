@@ -11,6 +11,7 @@ interface Game {
   venue: string;
   date_time: string;
   players_needed: number;
+  confirmed_count: number;
   format: string;
   subs?: number;
   notes?: string;
@@ -34,30 +35,23 @@ export default function FindGamesPage() {
     }
   };
 
-  const formatDateTime = (isoString: string) => {
-    const date = new Date(isoString);
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]} · ${hours}:${minutes}`;
+  const formatGameType = (format: string) => {
+    const match = format.match(/^(\d+)s?$/i);
+    return match ? `${match[1]}-a-side` : format;
   };
 
   const formatUrgentTime = (isoString: string) => {
     const date = new Date(isoString);
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
     const hh = date.getHours().toString().padStart(2, '0');
     const mm = date.getMinutes().toString().padStart(2, '0');
-    if (date.toDateString() === today.toDateString()) return `Today · ${hh}:${mm}`;
-    if (date.toDateString() === tomorrow.toDateString()) return `Tomorrow · ${hh}:${mm}`;
     return `${hh}:${mm}`;
   };
 
-  const formatGameType = (format: string) => {
-    const match = format.match(/^(\d+)s?$/i);
-    return match ? `${match[1]}-a-side` : format;
+  const formatShortDate = (isoString: string) => {
+    const date = new Date(isoString);
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
   };
 
   const isToday = (isoString: string) => new Date(isoString).toDateString() === new Date().toDateString();
@@ -74,60 +68,80 @@ export default function FindGamesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-phosphor"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--primary)]"></div>
       </div>
     );
   }
 
-  const GameCard = ({ game, urgent = false }: { game: Game; urgent?: boolean }) => (
-    <Link
-      href={`/dashboard/games/${game.id}`}
-      className={`block rounded-card p-5 border transition-colors ${
-        urgent
-          ? 'bg-warn/8 border-warn/40 hover:border-warn'
-          : 'bg-surface border-white/6 hover:border-white/20'
-      }`}
-    >
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="text-base font-bold text-white tracking-tight">{game.venue}</h3>
-        {urgent ? (
-          <span className="microlabel bg-warn/20 text-warn px-2 py-1 rounded-control animate-pulse">
-            {formatUrgentTime(game.date_time)}
-          </span>
-        ) : game.status === 'FULL' ? (
-          <span className="microlabel bg-red-500/15 text-red-400 px-2 py-1 rounded-control">Full</span>
-        ) : null}
-      </div>
+  const GameCard = ({ game, urgent = false }: { game: Game; urgent?: boolean }) => {
+    const confirmed = game.confirmed_count || 0;
+    const total = confirmed + game.players_needed;
+    const isFull = game.status === 'FULL';
+    const timeStr = formatUrgentTime(game.date_time);
 
-      {!urgent && (
-        <p className="text-secondary text-sm mb-3">{formatDateTime(game.date_time)}</p>
-      )}
+    const dotColor = isFull ? 'var(--text-3)' : urgent ? 'var(--warn)' : 'var(--primary)';
+    const statusLabel = isFull ? 'Full' : urgent ? 'Today' : 'Open';
+    const statusTextColor = isFull ? 'text-[var(--text-3)]' : urgent ? 'text-[var(--warn)]' : 'text-[var(--primary)]';
 
-      <div className="flex items-center justify-between">
-        <div className="flex gap-3 text-sm">
-          <span className="text-phosphor font-medium">{formatGameType(game.format)}</span>
-          {game.subs && <span className="text-secondary">£{game.subs}</span>}
+    return (
+      <Link
+        href={`/dashboard/games/${game.id}`}
+        className={`block rounded-card p-4 border transition-colors ${
+          urgent
+            ? 'bg-[var(--surface)] border-[var(--warn)]/30 hover:border-[var(--warn)]/60'
+            : 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--border-2)]'
+        }`}
+      >
+        {/* Status row */}
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: dotColor }} />
+          <span className={`microlabel ${statusTextColor}`}>{statusLabel}</span>
+          {urgent && (
+            <span className="ml-auto tabular-nums text-[var(--warn)] text-xs font-bold">{timeStr}</span>
+          )}
         </div>
-        <div className={`flex items-baseline gap-1 font-bold tabular-nums ${
-          urgent ? 'text-warn' : game.players_needed > 0 ? 'text-phosphor' : 'text-tertiary'
-        }`}>
-          <span className="text-2xl">{game.players_needed}</span>
-          <span className="microlabel text-current opacity-70">needed</span>
+
+        {/* Venue + time */}
+        <div className="flex items-baseline justify-between gap-2 mb-0.5">
+          <h3 className="text-white font-extrabold text-[15px] leading-snug" style={{ letterSpacing: '-0.015em' }}>
+            {game.venue}
+          </h3>
+          {!urgent && (
+            <span className="text-[var(--text-2)] tabular-nums text-sm shrink-0">{timeStr}</span>
+          )}
         </div>
-      </div>
-    </Link>
-  );
+
+        {/* Meta */}
+        <p className="text-[var(--text-2)] text-xs mb-3">
+          {!urgent && `${formatShortDate(game.date_time)} · `}
+          {formatGameType(game.format)}
+          {game.subs ? ` · £${game.subs}` : ''}
+          {total > 0 ? ` · ${confirmed}/${total}` : ''}
+        </p>
+
+        {/* Segmented bar */}
+        {total > 0 && (
+          <div className="flex gap-[3px]">
+            {Array.from({ length: total }).map((_, i) => (
+              <div key={i} className="flex-1 h-[4px] rounded-sm"
+                style={{ background: i < confirmed ? 'var(--primary)' : 'rgba(255,255,255,0.10)' }} />
+            ))}
+          </div>
+        )}
+      </Link>
+    );
+  };
 
   return (
     <div className="max-w-2xl mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-extrabold tracking-tight text-white">Find games</h1>
-        <button onClick={fetchGames} className="text-secondary hover:text-white text-sm transition-colors">↻ Refresh</button>
+        <h1 className="text-2xl font-extrabold tracking-tight text-white" style={{ letterSpacing: '-0.025em' }}>Find games</h1>
+        <button onClick={fetchGames} className="text-[var(--text-3)] hover:text-[var(--text-2)] text-sm transition-colors">↻ Refresh</button>
       </div>
 
       {urgentGames.length > 0 && (
         <section className="mb-8">
-          <p className="microlabel text-warn mb-3">Urgent — need players today</p>
+          <p className="microlabel text-[var(--warn)] mb-3">Urgent — need players today</p>
           <div className="space-y-2">
             {urgentGames.map(game => <GameCard key={game.id} game={game} urgent />)}
           </div>
@@ -135,15 +149,15 @@ export default function FindGamesPage() {
       )}
 
       <section>
-        <p className="microlabel text-secondary mb-3">Upcoming games</p>
+        <p className="microlabel text-[var(--text-3)] mb-3">Upcoming games</p>
         {upcomingGames.length === 0 && urgentGames.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-4xl mb-4">⚽</p>
-            <p className="text-secondary">No games available</p>
-            <p className="text-tertiary text-sm mt-1">Create one to get started</p>
+            <p className="text-[var(--text-2)]">No games available</p>
+            <p className="text-[var(--text-3)] text-sm mt-1">Create one to get started</p>
           </div>
         ) : upcomingGames.length === 0 ? (
-          <p className="text-tertiary text-sm text-center py-8">No upcoming games scheduled</p>
+          <p className="text-[var(--text-3)] text-sm text-center py-8">No upcoming games scheduled</p>
         ) : (
           <div className="space-y-2">
             {upcomingGames.map(game => <GameCard key={game.id} game={game} />)}
