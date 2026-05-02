@@ -103,7 +103,7 @@ export default function FindGamesPage() {
 
         {/* Venue + time */}
         <div className="flex items-baseline justify-between gap-2 mb-0.5">
-          <h3 className="text-white font-extrabold text-[15px] leading-snug" style={{ letterSpacing: '-0.015em' }}>
+          <h3 className="text-[var(--text)] font-extrabold text-[15px] leading-snug" style={{ letterSpacing: '-0.015em' }}>
             {game.venue}
           </h3>
           {!urgent && (
@@ -135,7 +135,7 @@ export default function FindGamesPage() {
   return (
     <div className="max-w-2xl mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-extrabold tracking-tight text-white" style={{ letterSpacing: '-0.025em' }}>Find games</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text)]" style={{ letterSpacing: '-0.025em' }}>Find games</h1>
         <button onClick={fetchGames} className="text-[var(--text-3)] hover:text-[var(--text-2)] text-sm transition-colors">↻ Refresh</button>
       </div>
 

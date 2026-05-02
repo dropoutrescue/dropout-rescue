@@ -83,12 +83,12 @@ export default function NotificationsPage() {
     <div className="max-w-2xl mx-auto p-4">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/games" className="text-[var(--text-2)] hover:text-white transition-colors">
+          <Link href="/dashboard/games" className="text-[var(--text-2)] hover:text-[var(--text)] transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">Notifications</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text)]">Notifications</h1>
         </div>
         {notifications.length > 0 && (
           <button onClick={handleClearAll} className="text-[var(--text-3)] hover:text-[var(--text-2)] text-sm transition-colors">
@@ -117,7 +117,7 @@ export default function NotificationsPage() {
               <div className="flex items-start gap-3">
                 <span className="text-xl">{getIcon(n.type)}</span>
                 <div className="flex-1">
-                  <p className={`text-sm ${n.read ? 'text-[var(--text-2)]' : 'text-white font-medium'}`}>{n.message}</p>
+                  <p className={`text-sm ${n.read ? 'text-[var(--text-2)]' : 'text-[var(--text)] font-medium'}`}>{n.message}</p>
                   <p className="text-xs text-[var(--text-3)] mt-1">{formatTimeAgo(n.created_at)}</p>
                 </div>
                 {!n.read && (

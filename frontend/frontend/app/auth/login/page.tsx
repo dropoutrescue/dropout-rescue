@@ -29,7 +29,7 @@ export default function LoginPage() {
     }
   };
 
-  const inputCls = 'w-full px-[14px] py-3 text-[15px] bg-[var(--surface)] border border-[var(--border-2)] rounded-control text-white placeholder:text-[var(--text-3)] focus:outline-none focus:border-[var(--primary)] transition-colors';
+  const inputCls = 'w-full px-[14px] py-3 text-[15px] bg-[var(--surface)] border border-[var(--border-2)] rounded-control text-[var(--text)] placeholder:text-[var(--text-3)] focus:outline-none focus:border-[var(--primary)] transition-colors';
 
   return (
     <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center p-4">

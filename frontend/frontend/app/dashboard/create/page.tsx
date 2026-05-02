@@ -48,13 +48,13 @@ export default function CreateGamePage() {
     }
   };
 
-  const inputCls = 'w-full px-[14px] py-3 text-[15px] bg-[var(--surface)] border border-[var(--border-2)] rounded-control text-white placeholder:text-[var(--text-3)] focus:outline-none focus:border-[var(--primary)] transition-colors';
+  const inputCls = 'w-full px-[14px] py-3 text-[15px] bg-[var(--surface)] border border-[var(--border-2)] rounded-control text-[var(--text)] placeholder:text-[var(--text-3)] focus:outline-none focus:border-[var(--primary)] transition-colors';
   const labelCls = 'block microlabel text-[var(--text-3)] mb-2';
   const getTodayDate = () => new Date().toISOString().split('T')[0];
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-extrabold tracking-tight text-white mb-6" style={{ letterSpacing: '-0.025em' }}>Create game</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text)] mb-6" style={{ letterSpacing: '-0.025em' }}>Create game</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -95,7 +95,7 @@ export default function CreateGamePage() {
                 className={`py-2.5 rounded-control text-sm font-bold transition-colors ${
                   formData.format === fmt
                     ? 'bg-[var(--primary)] text-black'
-                    : 'bg-[var(--surface)] border border-[var(--border-2)] text-[var(--text-2)] hover:border-[var(--border-2)] hover:text-white'
+                    : 'bg-[var(--surface)] border border-[var(--border-2)] text-[var(--text-2)] hover:border-[var(--border-2)] hover:text-[var(--text)]'
                 }`}>
                 {fmt}
               </button>

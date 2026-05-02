@@ -53,7 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const sidebarCls = (path: string) =>
     isActive(path)
       ? 'block px-4 py-2.5 rounded-control bg-[var(--primary)]/10 text-[var(--primary)] font-bold border border-[var(--primary)]/20'
-      : 'block px-4 py-2.5 rounded-control text-[var(--text-2)] hover:text-white hover:bg-white/4 transition-colors';
+      : 'block px-4 py-2.5 rounded-control text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] transition-colors';
 
   return (
     <div className="min-h-screen bg-[var(--bg)] pb-20 md:pb-0">
@@ -62,14 +62,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Image src="/logo.png" alt="Dropout Rescue" width={26} height={26} className="rounded-control" />
-            <span className="text-white font-bold text-sm tracking-tight">Dropout Rescue</span>
+            <span className="text-[var(--text)] font-bold text-sm tracking-tight">Dropout Rescue</span>
           </div>
           <Link href="/dashboard/notifications" className="relative p-2">
             <svg className="w-5 h-5 text-[var(--text-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
             {notificationCount > 0 && (
-              <span className="absolute top-0.5 right-0.5 bg-[var(--danger)] text-white microlabel rounded-full w-4 h-4 flex items-center justify-center">
+              <span className="absolute top-0.5 right-0.5 bg-[var(--danger)] text-[var(--text)] microlabel rounded-full w-4 h-4 flex items-center justify-center">
                 {notificationCount > 9 ? '9+' : notificationCount}
               </span>
             )}
@@ -109,7 +109,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex items-center gap-3 mb-8">
           <Image src="/logo.png" alt="Dropout Rescue" width={36} height={36} className="rounded-control" />
           <div>
-            <p className="text-white font-extrabold tracking-tight text-sm leading-none">Dropout Rescue</p>
+            <p className="text-[var(--text)] font-extrabold tracking-tight text-sm leading-none">Dropout Rescue</p>
             <p className="text-[var(--text-3)] text-xs mt-0.5">{user.name}</p>
           </div>
         </div>

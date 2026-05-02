@@ -45,14 +45,14 @@ export default function SignupPage() {
   };
 
   const field = (className = '') =>
-    `w-full px-[14px] py-3 text-[15px] bg-[var(--surface)] border border-[var(--border-2)] rounded-control text-white placeholder:text-[var(--text-3)] focus:outline-none focus:border-[var(--primary)] transition-colors ${className}`;
+    `w-full px-[14px] py-3 text-[15px] bg-[var(--surface)] border border-[var(--border-2)] rounded-control text-[var(--text)] placeholder:text-[var(--text-3)] focus:outline-none focus:border-[var(--primary)] transition-colors ${className}`;
 
   return (
     <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <Image src="/logo.png" alt="Dropout Rescue" width={150} height={150} className="mx-auto mb-4" />
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">Create account</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text)]">Create account</h1>
           <p className="text-[var(--text-2)] text-sm mt-1">Join the football community</p>
         </div>
 

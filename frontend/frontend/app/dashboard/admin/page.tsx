@@ -69,16 +69,22 @@ export default function AdminPage() {
 
   const tabCls = (active: boolean) =>
     `px-4 py-2 rounded-control text-sm font-bold transition-colors ${
-      active ? 'bg-phosphor text-black' : 'bg-surface border border-white/6 text-secondary hover:text-white'
+      active
+        ? 'bg-[var(--primary)] text-black'
+        : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--text-2)] hover:text-[var(--text)]'
     }`;
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-phosphor"></div></div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--primary)]"></div>
+      </div>
+    );
   }
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-extrabold tracking-tight text-white mb-6">Admin panel</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text)] mb-6">Admin panel</h1>
 
       <div className="flex gap-2 mb-6">
         <button onClick={() => setActiveTab('games')} className={tabCls(activeTab === 'games')}>
@@ -91,18 +97,19 @@ export default function AdminPage() {
 
       {activeTab === 'games' && (
         games.length === 0
-          ? <p className="text-center text-secondary py-20">No games</p>
+          ? <p className="text-center text-[var(--text-2)] py-20">No games</p>
           : (
             <div className="space-y-2">
               {games.map(game => (
-                <div key={game.id} className="bg-surface border border-white/6 rounded-card p-4 flex items-center justify-between gap-4">
+                <div key={game.id} className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-4 flex items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-white font-bold">{game.venue}</h3>
-                    <p className="text-secondary text-sm">by {game.organiser_name}</p>
-                    <p className="text-tertiary text-sm">{game.format} · {game.players_needed} needed</p>
+                    <h3 className="text-[var(--text)] font-bold">{game.venue}</h3>
+                    <p className="text-[var(--text-2)] text-sm">by {game.organiser_name}</p>
+                    <p className="text-[var(--text-3)] text-sm">{game.format} · {game.players_needed} needed</p>
                   </div>
                   <button onClick={() => handleDelete(game.id, game.venue)}
-                    className="shrink-0 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-control text-sm hover:bg-red-500/10 transition-colors">
+                    className="shrink-0 border px-3 py-1.5 rounded-control text-sm hover:bg-[var(--danger)]/5 transition-colors"
+                    style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>
                     Delete
                   </button>
                 </div>
@@ -113,36 +120,42 @@ export default function AdminPage() {
 
       {activeTab === 'users' && (
         users.length === 0
-          ? <p className="text-center text-secondary py-20">No users</p>
+          ? <p className="text-center text-[var(--text-2)] py-20">No users</p>
           : (
             <div className="space-y-2">
               {users.map(u => {
                 const isAdmin = u.email === 'kyle@dropoutrescue.co.uk';
                 return (
-                  <div key={u.id} className="bg-surface border border-white/6 rounded-card p-4">
+                  <div key={u.id} className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-white font-bold">{u.name}</h3>
-                        {isAdmin && <span className="microlabel bg-phosphor/20 text-phosphor px-2 py-0.5 rounded-control">Admin</span>}
+                        <h3 className="text-[var(--text)] font-bold">{u.name}</h3>
+                        {isAdmin && (
+                          <span className="microlabel px-2 py-0.5 rounded-control"
+                            style={{ background: 'rgba(0,255,136,0.15)', color: 'var(--primary)' }}>
+                            Admin
+                          </span>
+                        )}
                       </div>
                       {!isAdmin && (
                         <button onClick={() => handleDeleteUser(u.id, u.name)}
-                          className="text-red-400 text-sm hover:text-red-300 transition-colors">
+                          className="text-sm hover:opacity-70 transition-opacity"
+                          style={{ color: 'var(--danger)' }}>
                           Delete
                         </button>
                       )}
                     </div>
-                    <p className="text-secondary text-sm mb-2">{u.email}</p>
-                    {u.area && <p className="text-tertiary text-xs mb-2">{u.area}</p>}
+                    <p className="text-[var(--text-2)] text-sm mb-2">{u.email}</p>
+                    {u.area && <p className="text-[var(--text-3)] text-xs mb-2">{u.area}</p>}
                     <div className="flex gap-3 text-xs">
-                      <span className="bg-white/4 px-2.5 py-1 rounded-control text-secondary">
-                        Played <span className="text-white font-bold tabular-nums">{u.games_played || 0}</span>
+                      <span className="bg-[var(--surface-2)] px-2.5 py-1 rounded-control text-[var(--text-2)]">
+                        Played <span className="text-[var(--text)] font-bold tabular-nums">{u.games_played || 0}</span>
                       </span>
-                      <span className="bg-white/4 px-2.5 py-1 rounded-control text-secondary">
-                        Confirmed <span className="text-green-400 font-bold tabular-nums">{u.games_confirmed || 0}</span>
+                      <span className="bg-[var(--surface-2)] px-2.5 py-1 rounded-control text-[var(--text-2)]">
+                        Confirmed <span className="font-bold tabular-nums" style={{ color: 'var(--primary)' }}>{u.games_confirmed || 0}</span>
                       </span>
-                      <span className="bg-white/4 px-2.5 py-1 rounded-control text-secondary">
-                        No-shows <span className="text-red-400 font-bold tabular-nums">{u.no_shows || 0}</span>
+                      <span className="bg-[var(--surface-2)] px-2.5 py-1 rounded-control text-[var(--text-2)]">
+                        No-shows <span className="font-bold tabular-nums" style={{ color: 'var(--danger)' }}>{u.no_shows || 0}</span>
                       </span>
                     </div>
                   </div>

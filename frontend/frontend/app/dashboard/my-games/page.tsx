@@ -107,7 +107,7 @@ export default function MyGamesPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-extrabold tracking-tight text-white mb-6" style={{ letterSpacing: '-0.025em' }}>My games</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text)] mb-6" style={{ letterSpacing: '-0.025em' }}>My games</h1>
 
       <div className="flex gap-1 mb-6 border-b border-[var(--border)]">
         <button onClick={() => setTab('created')} className={tabCls(tab === 'created')}>
@@ -133,7 +133,7 @@ export default function MyGamesPage() {
                     <Link key={game.id} href={`/dashboard/games/${game.id}`}
                       className="block bg-[var(--surface)] border border-[var(--border)] rounded-card p-4 hover:border-[var(--border-2)] transition-colors">
                       <div className="flex justify-between items-start mb-1">
-                        <h3 className="text-white font-bold">{game.venue}</h3>
+                        <h3 className="text-[var(--text)] font-bold">{game.venue}</h3>
                         <span className="microlabel text-[var(--warn)] px-2 py-1 rounded-control" style={{ background: 'rgba(255,181,71,0.15)' }}>
                           Organiser
                         </span>
@@ -153,12 +153,12 @@ export default function MyGamesPage() {
                     {pastCreatedGames.map(game => (
                       <div key={game.id} className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-4 flex items-center justify-between gap-4">
                         <Link href={`/dashboard/games/${game.id}`} className="flex-1 min-w-0">
-                          <h3 className="text-white font-bold truncate">{game.venue}</h3>
+                          <h3 className="text-[var(--text)] font-bold truncate">{game.venue}</h3>
                           <p className="text-[var(--text-2)] text-sm">{formatDateTime(game.date_time)}</p>
                           <p className="text-[var(--text-3)] text-sm mt-0.5">{formatGameType(game.format)}</p>
                         </Link>
                         <button onClick={() => handleRepeat(game.id)} disabled={repeatingId === game.id}
-                          className="shrink-0 border border-[var(--border-2)] text-[var(--text-2)] text-sm font-semibold px-3 py-2 rounded-control hover:text-white transition-colors disabled:opacity-50 whitespace-nowrap">
+                          className="shrink-0 border border-[var(--border-2)] text-[var(--text-2)] text-sm font-semibold px-3 py-2 rounded-control hover:text-[var(--text)] transition-colors disabled:opacity-50 whitespace-nowrap">
                           {repeatingId === game.id ? 'Posting…' : 'Post again'}
                         </button>
                       </div>
@@ -184,7 +184,7 @@ export default function MyGamesPage() {
                 <Link key={game.id} href={`/dashboard/games/${game.id}`}
                   className="block bg-[var(--surface)] border border-[var(--border)] rounded-card p-4 hover:border-[var(--border-2)] transition-colors">
                   <div className="flex justify-between items-start mb-1">
-                    <h3 className="text-white font-bold">{game.venue}</h3>
+                    <h3 className="text-[var(--text)] font-bold">{game.venue}</h3>
                     <span className="microlabel px-2 py-1 rounded-control" style={{ color: statusColor(game.status) }}>
                       {statusLabel(game.status)}
                     </span>
