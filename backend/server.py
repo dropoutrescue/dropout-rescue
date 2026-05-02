@@ -68,6 +68,10 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+def compute_trust_score(games_shown: int, games_no_show: int) -> Optional[float]:
+    total = games_shown + games_no_show
+    return games_shown / total if total > 0 else None
+
 class UserResponse(BaseModel):
     id: str
     name: str
@@ -77,6 +81,9 @@ class UserResponse(BaseModel):
     phone: Optional[str] = None
     is_admin: bool = False
     games_played: int = 0
+    games_shown: int = 0
+    games_no_show: int = 0
+    trust_score: Optional[float] = None
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -104,6 +111,7 @@ class GameResponse(BaseModel):
     status: str  # "OPEN" or "FULL"
     confirmed_count: int = 0
     reserve_count: int = 0
+    attendance_recorded: bool = False
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
@@ -124,6 +132,7 @@ class ParticipantResponse(BaseModel):
     user_phone: Optional[str] = None
     user_games_played: int = 0
     status: str  # "REQUESTED", "CONFIRMED", "RESERVE"
+    trust_score: Optional[float] = None
 
 class PublicGameResponse(BaseModel):
     id: str
@@ -141,6 +150,13 @@ class QuickJoinRequest(BaseModel):
 
 class RepeatGameRequest(BaseModel):
     date_time: Optional[str] = None
+
+class AttendanceEntry(BaseModel):
+    participant_id: str
+    result: str  # "shown" or "no_show"
+
+class AttendanceRequest(BaseModel):
+    attendance: List[AttendanceEntry]
 
 # Auth endpoints
 @api_router.post("/auth/signup", response_model=TokenResponse)
@@ -175,7 +191,10 @@ async def signup(user_data: UserSignup):
             bio=user_dict.get("bio"),
             phone=user_dict.get("phone"),
             is_admin=(user_dict["email"] == ADMIN_EMAIL),
-            games_played=0
+            games_played=0,
+            games_shown=0,
+            games_no_show=0,
+            trust_score=None
         )
     )
 
@@ -187,6 +206,8 @@ async def login(credentials: UserLogin):
     
     token = create_access_token({"user_id": str(user["_id"]), "email": user["email"]})
     
+    gs = user.get("games_shown", 0)
+    gn = user.get("games_no_show", 0)
     return TokenResponse(
         access_token=token,
         user=UserResponse(
@@ -197,7 +218,10 @@ async def login(credentials: UserLogin):
             bio=user.get("bio"),
             phone=user.get("phone"),
             is_admin=bool(user.get("is_admin", False)),
-            games_played=user.get("games_played", 0)
+            games_played=user.get("games_played", 0),
+            games_shown=gs,
+            games_no_show=gn,
+            trust_score=compute_trust_score(gs, gn)
         )
     )
 
@@ -223,6 +247,8 @@ async def update_profile(user_data: UserUpdate, token: str):
 
     updated_user = await db.users.find_one({"_id": ObjectId(user_id)})
 
+    gs = updated_user.get("games_shown", 0)
+    gn = updated_user.get("games_no_show", 0)
     return UserResponse(
         id=str(updated_user["_id"]),
         name=updated_user["name"],
@@ -231,7 +257,10 @@ async def update_profile(user_data: UserUpdate, token: str):
         bio=updated_user.get("bio"),
         phone=updated_user.get("phone"),
         is_admin=(updated_user["email"] == ADMIN_EMAIL),
-        games_played=updated_user.get("games_played", 0)
+        games_played=updated_user.get("games_played", 0),
+        games_shown=gs,
+        games_no_show=gn,
+        trust_score=compute_trust_score(gs, gn)
     )
 
 @api_router.get("/public/games/{game_id}", response_model=PublicGameResponse)
@@ -329,7 +358,8 @@ async def create_game(game_data: GameCreate, token: str):
         notes=game_dict.get("notes"),
         status=game_dict["status"],
         confirmed_count=0,
-        reserve_count=0
+        reserve_count=0,
+        attendance_recorded=False
     )
 
 @api_router.get("/games", response_model=List[GameResponse])
@@ -360,9 +390,10 @@ async def get_games():
             notes=game.get("notes"),
             status=game["status"],
             confirmed_count=confirmed_count,
-            reserve_count=reserve_count
+            reserve_count=reserve_count,
+            attendance_recorded=game.get("attendance_recorded", False)
         ))
-    
+
     return game_responses
 
 @api_router.get("/games/{game_id}", response_model=GameResponse)
@@ -401,7 +432,8 @@ async def get_game(game_id: str):
         notes=game.get("notes"),
         status=game["status"],
         confirmed_count=confirmed_count,
-        reserve_count=reserve_count
+        reserve_count=reserve_count,
+        attendance_recorded=game.get("attendance_recorded", False)
     )
 
 @api_router.delete("/games/{game_id}")
@@ -484,7 +516,8 @@ async def repeat_game(game_id: str, token: str, body: RepeatGameRequest):
         notes=new_game.get("notes"),
         status=new_game["status"],
         confirmed_count=0,
-        reserve_count=0
+        reserve_count=0,
+        attendance_recorded=False
     )
 
 # Get games user has joined (as participant)
@@ -587,6 +620,12 @@ async def get_game_participants(game_id: str):
         games_played = user.get("games_played", 0) if user else p.get("user_games_played", 0)
         user_phone = user.get("phone") if user else p.get("user_phone")
 
+        ts = None
+        if user:
+            gs = user.get("games_shown", 0)
+            gn = user.get("games_no_show", 0)
+            ts = compute_trust_score(gs, gn)
+
         result.append(ParticipantResponse(
             id=str(p["_id"]),
             game_id=p["game_id"],
@@ -595,7 +634,8 @@ async def get_game_participants(game_id: str):
             user_area=p.get("user_area") or p.get("user_position"),  # Fallback for old data
             user_phone=user_phone,
             user_games_played=games_played,
-            status=p["status"]
+            status=p["status"],
+            trust_score=ts
         ))
     
     return result
@@ -814,6 +854,47 @@ async def organiser_remove_participant(game_id: str, participant_id: str, token:
 
     return {"message": "Removed"}
 
+@api_router.post("/games/{game_id}/attendance")
+async def record_attendance(game_id: str, request: AttendanceRequest, token: str):
+    payload = verify_token(token)
+    user_id = payload["user_id"]
+
+    try:
+        game = await db.games.find_one({"_id": ObjectId(game_id)})
+    except:
+        raise HTTPException(status_code=404, detail="Game not found")
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    if game["organiser_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Only the organiser can record attendance")
+    if game.get("attendance_recorded"):
+        raise HTTPException(status_code=400, detail="Attendance already recorded")
+
+    for entry in request.attendance:
+        try:
+            participant = await db.participants.find_one({"_id": ObjectId(entry.participant_id)})
+        except:
+            continue
+        if not participant or not participant.get("user_id"):
+            continue  # Skip guests
+        if entry.result == "shown":
+            await db.users.update_one(
+                {"_id": ObjectId(participant["user_id"])},
+                {"$inc": {"games_shown": 1}}
+            )
+        elif entry.result == "no_show":
+            await db.users.update_one(
+                {"_id": ObjectId(participant["user_id"])},
+                {"$inc": {"games_no_show": 1}}
+            )
+
+    await db.games.update_one(
+        {"_id": ObjectId(game_id)},
+        {"$set": {"attendance_recorded": True}}
+    )
+
+    return {"message": "Recorded"}
+
 # Get notifications for a user
 @api_router.get("/notifications")
 async def get_notifications(token: str):
@@ -901,9 +982,10 @@ async def get_my_games(token: str):
             notes=game.get("notes"),
             status=game["status"],
             confirmed_count=confirmed_count,
-            reserve_count=reserve_count
+            reserve_count=reserve_count,
+            attendance_recorded=game.get("attendance_recorded", False)
         ))
-    
+
     return game_responses
 
 # Admin endpoints

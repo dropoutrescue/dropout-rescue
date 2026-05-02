@@ -13,11 +13,13 @@ interface Game {
   id: string; organiser_id: string; organiser_name: string; organiser_phone?: string;
   venue: string; date_time: string; players_needed: number; format: string;
   subs?: number; notes?: string; status: string; confirmed_count: number; reserve_count: number;
+  attendance_recorded?: boolean;
 }
 
 interface Participant {
   id: string; game_id: string; user_id: string; user_name: string;
   user_area?: string; user_phone?: string; user_games_played: number; status: string;
+  trust_score?: number | null;
 }
 
 const getReliabilityBadge = (gamesPlayed: number) => {
@@ -40,6 +42,8 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const [repeatError, setRepeatError] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [attendanceMap, setAttendanceMap] = useState<Record<string, 'shown' | 'no_show'>>({});
+  const [submittingAttendance, setSubmittingAttendance] = useState(false);
 
   const { user, token } = useAuth();
   const router = useRouter();
@@ -176,6 +180,17 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         .then(() => alert('Message copied! Paste it in WhatsApp to the organiser.'))
         .catch(() => alert(`Copy this message to the organiser:\n\n${message}`));
     }
+  };
+
+  const handleAttendanceSubmit = async () => {
+    setSubmittingAttendance(true);
+    try {
+      const attendance = Object.entries(attendanceMap).map(([participant_id, result]) => ({ participant_id, result }));
+      await axios.post(`${API_URL}/games/${gameId}/attendance?token=${token}`, { attendance });
+      await fetchGameDetails();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to record attendance');
+    } finally { setSubmittingAttendance(false); }
   };
 
   const handleDelete = async () => {
@@ -413,6 +428,51 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       )}
 
+      {/* Attendance */}
+      {isOrganiser && isPastGame && !game.attendance_recorded && confirmedPlayers.length > 0 && (
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-4 mb-5">
+          <p className="microlabel text-[var(--text-3)] mb-3">Did everyone show up?</p>
+          <div className="space-y-2 mb-4">
+            {confirmedPlayers.map(player => (
+              <div key={player.id} className="flex items-center justify-between gap-3">
+                <span className="text-[var(--text)] text-sm font-medium truncate flex-1">{player.user_name}</span>
+                {player.user_id ? (
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    <button
+                      onClick={() => setAttendanceMap(m => ({ ...m, [player.id]: 'shown' }))}
+                      className={`text-xs font-bold px-2.5 py-1.5 rounded-control transition-colors ${
+                        attendanceMap[player.id] === 'shown'
+                          ? 'bg-[var(--primary)] text-black'
+                          : 'bg-[var(--surface-2)] text-[var(--text-2)] hover:text-[var(--text)]'
+                      }`}>
+                      Showed
+                    </button>
+                    <button
+                      onClick={() => setAttendanceMap(m => ({ ...m, [player.id]: 'no_show' }))}
+                      className={`text-xs font-bold px-2.5 py-1.5 rounded-control transition-colors ${
+                        attendanceMap[player.id] === 'no_show'
+                          ? 'text-black'
+                          : 'bg-[var(--surface-2)] text-[var(--text-2)] hover:text-[var(--text)]'
+                      }`}
+                      style={attendanceMap[player.id] === 'no_show' ? { background: 'var(--danger)' } : {}}>
+                      No-show
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-[var(--text-3)] text-xs flex-shrink-0">Guest</span>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={handleAttendanceSubmit}
+            disabled={submittingAttendance || Object.keys(attendanceMap).length === 0}
+            className="w-full bg-[var(--primary)] text-black font-extrabold uppercase tracking-[0.1em] py-[11px] rounded-control hover:opacity-90 transition-opacity disabled:opacity-50">
+            {submittingAttendance ? 'Saving…' : 'Submit attendance'}
+          </button>
+        </div>
+      )}
+
       {/* Squad */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-3">
@@ -451,6 +511,19 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                     <p className="text-[var(--text)] text-[15px] font-medium leading-tight truncate">{player.user_name}</p>
                     <p className="text-[11px] text-[var(--text-2)] mt-0.5">
                       {badge.emoji} {badge.label}{player.user_area ? ` · ${player.user_area}` : ''}
+                      {player.user_id != null && (
+                        <span className="microlabel ml-1.5" style={{
+                          color: player.trust_score == null ? 'var(--text-3)'
+                            : player.trust_score >= 0.9 ? 'var(--primary)'
+                            : player.trust_score >= 0.7 ? 'var(--text-2)'
+                            : 'var(--warn)'
+                        }}>
+                          {' · '}{player.trust_score == null ? 'New'
+                            : player.trust_score >= 0.9 ? 'Reliable'
+                            : player.trust_score >= 0.7 ? 'OK'
+                            : 'Flaky'}
+                        </span>
+                      )}
                     </p>
                   </div>
                   {/* Actions */}
@@ -488,6 +561,19 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                     <p className="text-[var(--text)] text-[15px] font-medium leading-tight truncate">{player.user_name}</p>
                     <p className="text-[11px] text-[var(--text-2)] mt-0.5">
                       {badge.emoji} {badge.label}{player.user_area ? ` · ${player.user_area}` : ''}
+                      {player.user_id != null && (
+                        <span className="microlabel ml-1.5" style={{
+                          color: player.trust_score == null ? 'var(--text-3)'
+                            : player.trust_score >= 0.9 ? 'var(--primary)'
+                            : player.trust_score >= 0.7 ? 'var(--text-2)'
+                            : 'var(--warn)'
+                        }}>
+                          {' · '}{player.trust_score == null ? 'New'
+                            : player.trust_score >= 0.9 ? 'Reliable'
+                            : player.trust_score >= 0.7 ? 'OK'
+                            : 'Flaky'}
+                        </span>
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
@@ -523,6 +609,19 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                     <p className="text-[var(--text)] text-[15px] font-medium leading-tight truncate">{player.user_name}</p>
                     <p className="text-[11px] text-[var(--text-2)] mt-0.5">
                       {badge.emoji} {badge.label}{player.user_area ? ` · ${player.user_area}` : ''}
+                      {player.user_id != null && (
+                        <span className="microlabel ml-1.5" style={{
+                          color: player.trust_score == null ? 'var(--text-3)'
+                            : player.trust_score >= 0.9 ? 'var(--primary)'
+                            : player.trust_score >= 0.7 ? 'var(--text-2)'
+                            : 'var(--warn)'
+                        }}>
+                          {' · '}{player.trust_score == null ? 'New'
+                            : player.trust_score >= 0.9 ? 'Reliable'
+                            : player.trust_score >= 0.7 ? 'OK'
+                            : 'Flaky'}
+                        </span>
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
