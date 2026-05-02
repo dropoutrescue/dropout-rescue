@@ -150,6 +150,11 @@ class QuickJoinRequest(BaseModel):
 
 class RepeatGameRequest(BaseModel):
     date_time: Optional[str] = None
+    venue: Optional[str] = None
+    format: Optional[str] = None
+    players_needed: Optional[int] = None
+    subs: Optional[float] = None
+    notes: Optional[str] = None
 
 class AttendanceEntry(BaseModel):
     participant_id: str
@@ -492,12 +497,12 @@ async def repeat_game(game_id: str, token: str, body: RepeatGameRequest):
     new_game = {
         "organiser_id": user_id,
         "organiser_name": user["name"],
-        "venue": original["venue"],
+        "venue": body.venue if body.venue is not None else original["venue"],
         "date_time": new_date_time,
-        "players_needed": original["players_needed"],
-        "format": original["format"],
-        "subs": original.get("subs"),
-        "notes": original.get("notes"),
+        "players_needed": body.players_needed if body.players_needed is not None else original["players_needed"],
+        "format": body.format if body.format is not None else original["format"],
+        "subs": body.subs if body.subs is not None else original.get("subs"),
+        "notes": body.notes if body.notes is not None else original.get("notes"),
         "status": "OPEN",
         "created_at": datetime.utcnow()
     }

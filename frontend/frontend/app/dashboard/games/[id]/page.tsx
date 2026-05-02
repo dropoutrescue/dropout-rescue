@@ -40,6 +40,8 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const [linkCopied, setLinkCopied] = useState(false);
   const [repeatLoading, setRepeatLoading] = useState(false);
   const [repeatError, setRepeatError] = useState('');
+  const [repeatSheetOpen, setRepeatSheetOpen] = useState(false);
+  const [repeatForm, setRepeatForm] = useState({ venue: '', date: '', time: '', players_needed: '', format: '5s', subs: '', notes: '' });
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [attendanceMap, setAttendanceMap] = useState<Record<string, 'shown' | 'no_show'>>({});
@@ -205,12 +207,36 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
     } finally { setDeleteLoading(false); }
   };
 
-  const handleRepeat = async () => {
+  const openRepeatSheet = () => {
+    if (!game) return;
+    const d = new Date(new Date(game.date_time).getTime() + 7 * 24 * 60 * 60 * 1000);
+    setRepeatForm({
+      venue: game.venue,
+      date: d.toISOString().split('T')[0],
+      time: `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
+      players_needed: String(game.players_needed),
+      format: game.format,
+      subs: game.subs ? String(game.subs) : '',
+      notes: game.notes || '',
+    });
+    setRepeatError('');
+    setRepeatSheetOpen(true);
+  };
+
+  const handleRepeatSubmit = async () => {
     if (!game) return;
     setRepeatLoading(true);
     setRepeatError('');
     try {
-      const res = await axios.post(`${API_URL}/games/${game.id}/repeat?token=${token}`, {});
+      const body: Record<string, unknown> = {
+        date_time: new Date(`${repeatForm.date}T${repeatForm.time}:00`).toISOString(),
+        venue: repeatForm.venue,
+        format: repeatForm.format,
+        players_needed: parseInt(repeatForm.players_needed),
+      };
+      if (repeatForm.subs) body.subs = parseFloat(repeatForm.subs);
+      if (repeatForm.notes.trim()) body.notes = repeatForm.notes.trim();
+      const res = await axios.post(`${API_URL}/games/${game.id}/repeat?token=${token}`, body);
       router.push(`/dashboard/games/${res.data.id}`);
     } catch (error: any) {
       setRepeatError(error.response?.data?.detail || 'Failed to repost game');
@@ -279,8 +305,16 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const hudDate = `${d.getDate()} ${monthNames[d.getMonth()]}`;
   const hudTime = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
   const statusColor = game.status === 'FULL' ? 'var(--text-3)' : 'var(--primary)';
+  const repeatDateLabel = (() => {
+    const rd = new Date(new Date(game.date_time).getTime() + 7 * 24 * 60 * 60 * 1000);
+    const rDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const rMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${rDays[rd.getDay()]} ${rd.getDate()} ${rMonths[rd.getMonth()]}`;
+  })();
+  const sheetInputCls = 'w-full px-[14px] py-3 text-[15px] bg-[var(--bg)] border border-[var(--border-2)] rounded-control text-[var(--text)] placeholder:text-[var(--text-3)] focus:outline-none focus:border-[var(--primary)] transition-colors';
 
   return (
+    <>
     <div className="max-w-2xl mx-auto p-4 pb-32">
 
       {/* Back */}
@@ -417,13 +451,10 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
             </button>
           </div>
           {isPastGame && (
-            <div>
-              {repeatError && <p className="text-[var(--danger)] text-xs mb-2">{repeatError}</p>}
-              <button onClick={handleRepeat} disabled={repeatLoading}
-                className="w-full border border-[var(--border-2)] text-[var(--text-2)] font-medium py-2.5 rounded-control hover:text-[var(--text)] transition-colors disabled:opacity-50 text-sm">
-                {repeatLoading ? 'Creating…' : '↻ Post again next week'}
-              </button>
-            </div>
+            <button onClick={openRepeatSheet}
+              className="w-full border border-[var(--border-2)] text-[var(--text-2)] font-medium py-2.5 rounded-control hover:text-[var(--text)] transition-colors text-sm">
+              ↻ Repost for {repeatDateLabel}
+            </button>
           )}
         </div>
       )}
@@ -659,5 +690,83 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       )}
     </div>
+
+    {/* Repeat sheet */}
+    {repeatSheetOpen && (
+      <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+        <div className="absolute inset-0 bg-black/60" onClick={() => !repeatLoading && setRepeatSheetOpen(false)} />
+        <div className="relative w-full md:max-w-lg bg-[var(--surface)] rounded-t-card md:rounded-card p-5 overflow-y-auto max-h-[90vh]">
+          <h2 className="text-lg font-extrabold tracking-tight text-[var(--text)] mb-5" style={{ letterSpacing: '-0.025em' }}>New game</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block microlabel text-[var(--text-3)] mb-2">Venue</label>
+              <input type="text" value={repeatForm.venue}
+                onChange={e => setRepeatForm(f => ({ ...f, venue: e.target.value }))}
+                className={sheetInputCls} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block microlabel text-[var(--text-3)] mb-2">Date</label>
+                <input type="date" value={repeatForm.date}
+                  onChange={e => setRepeatForm(f => ({ ...f, date: e.target.value }))}
+                  className={sheetInputCls} />
+              </div>
+              <div>
+                <label className="block microlabel text-[var(--text-3)] mb-2">Time</label>
+                <input type="time" value={repeatForm.time}
+                  onChange={e => setRepeatForm(f => ({ ...f, time: e.target.value }))}
+                  className={sheetInputCls} />
+              </div>
+            </div>
+            <div>
+              <label className="block microlabel text-[var(--text-3)] mb-2">Format</label>
+              <div className="grid grid-cols-7 gap-1.5">
+                {['5s', '6s', '7s', '8s', '9s', '10s', '11s'].map(fmt => (
+                  <button key={fmt} type="button"
+                    onClick={() => setRepeatForm(f => ({ ...f, format: fmt }))}
+                    className={`py-2 rounded-control text-sm font-bold transition-colors ${
+                      repeatForm.format === fmt
+                        ? 'bg-[var(--primary)] text-black'
+                        : 'bg-[var(--bg)] border border-[var(--border-2)] text-[var(--text-2)] hover:text-[var(--text)]'
+                    }`}>
+                    {fmt}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block microlabel text-[var(--text-3)] mb-2">Players needed</label>
+              <input type="number" min="1" value={repeatForm.players_needed}
+                onChange={e => setRepeatForm(f => ({ ...f, players_needed: e.target.value }))}
+                className={sheetInputCls} />
+            </div>
+            <div>
+              <label className="block microlabel text-[var(--text-3)] mb-2">Subs (£)</label>
+              <input type="number" step="0.01" value={repeatForm.subs}
+                onChange={e => setRepeatForm(f => ({ ...f, subs: e.target.value }))}
+                className={sheetInputCls} />
+            </div>
+            <div>
+              <label className="block microlabel text-[var(--text-3)] mb-2">Notes</label>
+              <textarea rows={3} value={repeatForm.notes}
+                onChange={e => setRepeatForm(f => ({ ...f, notes: e.target.value }))}
+                className={`${sheetInputCls} resize-none`} />
+            </div>
+          </div>
+          {repeatError && <p className="text-[var(--danger)] text-sm mt-3">{repeatError}</p>}
+          <div className="flex gap-2 mt-5">
+            <button onClick={handleRepeatSubmit} disabled={repeatLoading}
+              className="flex-1 bg-[var(--primary)] text-black font-extrabold uppercase tracking-[0.1em] py-[11px] rounded-control hover:opacity-90 transition-opacity disabled:opacity-50">
+              {repeatLoading ? 'Posting…' : 'Post game'}
+            </button>
+            <button onClick={() => setRepeatSheetOpen(false)} disabled={repeatLoading}
+              className="flex-1 bg-[var(--bg)] border border-[var(--border-2)] text-[var(--text)] font-medium py-[11px] rounded-control hover:border-[var(--primary)]/40 transition-colors disabled:opacity-50">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
