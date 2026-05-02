@@ -18,7 +18,6 @@ interface Game {
 interface Participant {
   id: string; game_id: string; user_id: string; user_name: string;
   user_area?: string; user_phone?: string; user_games_played: number; status: string;
-  withdraw_token?: string;
 }
 
 const getReliabilityBadge = (gamesPlayed: number) => {
@@ -122,10 +121,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
       if (waWindow && player.user_phone && game) {
         let phone = player.user_phone.replace(/\s+/g, '').replace(/^0/, '44');
         if (!phone.startsWith('+') && !phone.startsWith('44')) phone = '44' + phone;
-        let message = `You're confirmed 👍\nGame: ${game.venue}\nTime: ${formatShortDate(game.date_time)}\nSee you there`;
-        if (player.withdraw_token) {
-          message += `\n\nCan't make it? ${window.location.origin}/leave/${player.id}?t=${player.withdraw_token}`;
-        }
+        const message = `You're confirmed 👍\nGame: ${game.venue}\nTime: ${formatShortDate(game.date_time)}\nSee you there`;
         waWindow.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
       }
     } catch (error: any) {

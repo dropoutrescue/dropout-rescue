@@ -34,7 +34,6 @@ export default function JoinPage({ params }: { params: Promise<{ gameId: string 
   const [phone, setPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [withdrawInfo, setWithdrawInfo] = useState<{ participantId: string; token: string } | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -55,8 +54,7 @@ export default function JoinPage({ params }: { params: Promise<{ gameId: string 
     }
     setSubmitting(true);
     try {
-      const res = await axios.post(`${API_URL}/public/games/${gameId}/quick-join`, { name: name.trim(), phone: cleanPhone });
-      setWithdrawInfo({ participantId: res.data.participant_id, token: res.data.withdraw_token });
+      await axios.post(`${API_URL}/public/games/${gameId}/quick-join`, { name: name.trim(), phone: cleanPhone });
       setSuccess(true);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Something went wrong. Please try again.');
@@ -124,22 +122,12 @@ export default function JoinPage({ params }: { params: Promise<{ gameId: string 
         </div>
 
         {success ? (
-          <div className="rounded-card p-6 border"
+          <div className="rounded-card p-6 text-center border"
             style={{ background: 'var(--primary-tint)', borderColor: 'var(--primary-dim)' }}>
-            <p className="text-[var(--primary)] text-xl font-extrabold tracking-tight mb-2 text-center">Request sent ✓</p>
-            <p className="text-[var(--text-2)] text-sm text-center mb-4">
+            <p className="text-[var(--primary)] text-xl font-extrabold tracking-tight mb-2">Request sent ✓</p>
+            <p className="text-[var(--text-2)] text-sm">
               {organiserFirstName} will message you on WhatsApp when you're confirmed.
             </p>
-            {withdrawInfo && (
-              <div className="bg-[var(--bg)] border border-[var(--border-2)] rounded-control p-3">
-                <p className="text-[var(--text-2)] text-xs mb-2">Can't make it later?</p>
-                <a href={`/leave/${withdrawInfo.participantId}?t=${withdrawInfo.token}`}
-                  className="text-[var(--primary)] text-sm font-medium hover:opacity-80 transition-opacity block mb-2">
-                  Use this link to remove yourself →
-                </a>
-                <p className="text-[var(--text-3)] text-xs">Save this link — you'll need it if you can't make it.</p>
-              </div>
-            )}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3">

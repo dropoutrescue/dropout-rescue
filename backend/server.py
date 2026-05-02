@@ -4,7 +4,6 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
-import secrets
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
@@ -125,7 +124,6 @@ class ParticipantResponse(BaseModel):
     user_phone: Optional[str] = None
     user_games_played: int = 0
     status: str  # "REQUESTED", "CONFIRMED", "RESERVE"
-    withdraw_token: Optional[str] = None
 
 class PublicGameResponse(BaseModel):
     id: str
@@ -143,9 +141,6 @@ class QuickJoinRequest(BaseModel):
 
 class RepeatGameRequest(BaseModel):
     date_time: Optional[str] = None
-
-class PublicWithdrawRequest(BaseModel):
-    token: str
 
 # Auth endpoints
 @api_router.post("/auth/signup", response_model=TokenResponse)
@@ -282,8 +277,7 @@ async def quick_join_game(game_id: str, request: QuickJoinRequest):
     })
     if existing:
         raise HTTPException(status_code=400, detail="This phone number has already requested to join")
-    withdraw_token = secrets.token_urlsafe(16)
-    result = await db.participants.insert_one({
+    await db.participants.insert_one({
         "game_id": game_id,
         "user_id": None,
         "user_name": request.name.strip(),
@@ -291,7 +285,6 @@ async def quick_join_game(game_id: str, request: QuickJoinRequest):
         "user_area": None,
         "user_games_played": 0,
         "status": "REQUESTED",
-        "withdraw_token": withdraw_token,
         "created_at": datetime.utcnow()
     })
     await db.notifications.insert_one({
@@ -303,7 +296,7 @@ async def quick_join_game(game_id: str, request: QuickJoinRequest):
         "created_at": datetime.utcnow(),
         "read": False
     })
-    return {"message": "Request sent", "participant_id": str(result.inserted_id), "withdraw_token": withdraw_token}
+    return {"message": "Request sent"}
 
 # Game endpoints
 @api_router.post("/games", response_model=GameResponse)
@@ -602,8 +595,7 @@ async def get_game_participants(game_id: str):
             user_area=p.get("user_area") or p.get("user_position"),  # Fallback for old data
             user_phone=user_phone,
             user_games_played=games_played,
-            status=p["status"],
-            withdraw_token=p.get("withdraw_token")
+            status=p["status"]
         ))
     
     return result
@@ -782,43 +774,6 @@ async def withdraw_from_game(game_id: str, token: str):
     })
 
     return {"message": "You've been removed from the game", "was_confirmed": was_confirmed}
-
-@api_router.post("/public/participants/{participant_id}/withdraw")
-async def public_withdraw(participant_id: str, request: PublicWithdrawRequest):
-    try:
-        participant = await db.participants.find_one({"_id": ObjectId(participant_id)})
-    except:
-        raise HTTPException(status_code=404, detail="Not found")
-    if not participant:
-        raise HTTPException(status_code=404, detail="Not found")
-
-    stored_token = participant.get("withdraw_token")
-    if stored_token is None:
-        # Logged-in user, not a guest
-        raise HTTPException(status_code=410, detail="Please log in to leave this game")
-    if not secrets.compare_digest(stored_token, request.token):
-        raise HTTPException(status_code=403, detail="Invalid token")
-
-    game = await db.games.find_one({"_id": ObjectId(participant["game_id"])})
-    if not game:
-        raise HTTPException(status_code=404, detail="Game not found")
-
-    was_confirmed = participant["status"] == "CONFIRMED"
-    await db.participants.delete_one({"_id": participant["_id"]})
-
-    if was_confirmed:
-        await _promote_reserve_or_reopen(participant["game_id"], game)
-
-    await db.notifications.insert_one({
-        "user_id": game["organiser_id"],
-        "type": "GUEST_WITHDREW",
-        "message": f"{participant['user_name']} can no longer make {game['venue']}",
-        "game_id": participant["game_id"],
-        "created_at": datetime.utcnow(),
-        "read": False
-    })
-
-    return {"message": "Removed"}
 
 @api_router.delete("/games/{game_id}/participants/{participant_id}")
 async def organiser_remove_participant(game_id: str, participant_id: str, token: str):
