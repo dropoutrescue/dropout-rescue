@@ -18,6 +18,7 @@ interface Game {
 interface Participant {
   id: string; game_id: string; user_id: string; user_name: string;
   user_area?: string; user_phone?: string; user_games_played: number; status: string;
+  withdraw_token?: string;
 }
 
 const getReliabilityBadge = (gamesPlayed: number) => {
@@ -121,7 +122,10 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
       if (waWindow && player.user_phone && game) {
         let phone = player.user_phone.replace(/\s+/g, '').replace(/^0/, '44');
         if (!phone.startsWith('+') && !phone.startsWith('44')) phone = '44' + phone;
-        const message = `You're confirmed 👍\nGame: ${game.venue}\nTime: ${formatShortDate(game.date_time)}\nSee you there`;
+        let message = `You're confirmed 👍\nGame: ${game.venue}\nTime: ${formatShortDate(game.date_time)}\nSee you there`;
+        if (player.withdraw_token) {
+          message += `\n\nCan't make it? ${window.location.origin}/leave/${player.id}?t=${player.withdraw_token}`;
+        }
         waWindow.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
       }
     } catch (error: any) {
@@ -142,10 +146,10 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   };
 
   const handleRemove = async (participantId: string, playerName: string) => {
-    if (!confirm(`Remove ${playerName} from the game?`)) return;
+    if (!confirm(`Remove ${playerName} from this game?`)) return;
     setActionLoading(true);
     try {
-      await axios.delete(`${API_URL}/participants/${participantId}?token=${token}`);
+      await axios.delete(`${API_URL}/games/${gameId}/participants/${participantId}?token=${token}`);
       await fetchGameDetails();
     } catch (error: any) {
       alert(error.response?.data?.detail || 'Failed to remove');
